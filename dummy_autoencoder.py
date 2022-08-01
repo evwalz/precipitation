@@ -9,7 +9,7 @@ from pytorch_lightning.utilities.cli import LightningCLI
 
 
 class LitAutoEncoder(pl.LightningModule):
-    def __init__(self, learning_rate=0.01, **kwargs):
+    def __init__(self, learning_rate: float=0.01, **kwargs):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 3)
@@ -29,7 +29,6 @@ class LitAutoEncoder(pl.LightningModule):
         loss = F.mse_loss(x_hat, x)
         self.log("train_loss", loss)
         return loss
-        # --------------------------
 
     def validation_step(self, batch, batch_idx):
         # --------------------------
@@ -40,17 +39,16 @@ class LitAutoEncoder(pl.LightningModule):
         x_hat = self.decoder(z)
         loss = F.mse_loss(x_hat, x)
         self.log("val_loss", loss)
-        # --------------------------
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         train = DummyDataset((1, 28, 28), (1,))
         return DataLoader(train, batch_size=64)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         val = DummyDataset((1, 28, 28), (1,))
         return DataLoader(val, batch_size=64)
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
         return optimizer
 
