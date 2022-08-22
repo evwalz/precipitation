@@ -169,7 +169,7 @@ class PrecipitationDataModule(LightningDataModule):
             self.test_target = torch.from_numpy(target_array_test).float()
     
     def train_dataloader(self) -> DataLoader:
-        if self.trainer and self.trainer.on_gpu:
+        if self.trainer and self.trainer.gpus > 0:
             self.train_data = self.train_data.cuda()
             self.train_target = self.train_target.cuda()
         
@@ -187,7 +187,7 @@ class PrecipitationDataModule(LightningDataModule):
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
     
     def test_dataloader(self) -> DataLoader:
-        if self.trainer and self.trainer.on_gpu:
+        if self.trainer and self.trainer.gpus > 0:
             self.test_data = self.test_data.cuda()
             self.test_target = self.test_target.cuda()
         
