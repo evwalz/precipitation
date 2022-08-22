@@ -25,6 +25,19 @@
             "program": "${workspaceRoot}/precipitation/data/data_module.py",
             "console": "integratedTerminal",
             "args": []
-        }
+        },
+        {
+            "name": "Debug: dummy MLP",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "${workspaceRoot}/precipitation/models/mlp.py",
+            "console": "integratedTerminal",
+            "args": [
+                "fit",
+                "--model.learning_rate",
+                "0.1",
+            ]
+        },
     ]
 }

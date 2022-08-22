@@ -178,7 +178,7 @@ class PrecipitationDataModule(LightningDataModule):
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=0)
     
     def val_dataloader(self) -> DataLoader:
-        if self.trainer and self.trainer.on_gpu:
+        if self.trainer and self.trainer.gpus > 0:
             self.val_data = self.val_data.cuda()
             self.val_target = self.val_target.cuda()
         
