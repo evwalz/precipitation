@@ -78,13 +78,54 @@ class PrecipitationDataPaths:
         return train, test
     
 
+class PerFeatureMinMaxScaler:
+    def __init__(self, feature_range: tuple[float, float] = (-1, 1), axis: int = 1) -> None:
+        self.feature_range = feature_range
+        self.axis = axis
+        self.min = None
+        self.max = None
+    
+    def fit(self, data: np.ndarray) -> None:
+        self.n_features = data.shape[self.axis]
+        self.min = np.zeros(self.n_features)
+        self.max = np.zeros(self.n_features)
+        
+        for i in range(self.n_features):
+            self.min[i] = data[:, i].min()
+            self.max[i] = data[:, i].max()
+    
+    def transform(self, data: np.ndarray) -> np.ndarray:
+        if self.min is None or self.max is None:
+            raise ValueError('You must call fit before transform or inverse transform.')
+        new_data = np.zeros(data.shape)
+        for i in range(self.n_features):
+            new_data[:, i] = (data[:, i] - self.min[i]) / (self.max[i] - self.min[i]) * (self.feature_range[1] - self.feature_range[0]) + self.feature_range[0]
+            
+        return new_data
+
+    def inverse_transform(self, data: np.ndarray) -> np.ndarray:
+        if self.min is None or self.max is None:
+            raise ValueError('You must call fit before transform or inverse transform.')
+        new_data = np.zeros(data.shape)
+        for i in range(self.n_features):
+            new_data[:, i] = (data[:, i] - self.feature_range[0]) / (self.feature_range[1] - self.feature_range[0]) * (self.max[i] - self.min[i]) + self.min[i]
+            
+        return new_data
+    
+    def fit_transform(self, data: np.ndarray) -> np.ndarray:
+        self.fit(data)
+        return self.transform(data)
+
+
 class PrecipitationDataModule(LightningDataModule):
-    def __init__(self, data_dir: str = '~/datasets/precipitation', feature_set: str = 'v1', batch_size: int = 32, fold: int = 0,  **kwargs):
+    def __init__(self, data_dir: str = '~/datasets/precipitation', feature_set: str = 'v1', normalization_range: tuple[float, float] = (-1, 1), batch_size: int = 32, fold: int = 0,  **kwargs):
         super().__init__()
         self.data_dir = Path(data_dir)
         self.feature_set = feature_set
         self.batch_size = batch_size
         self.fold = fold
+        
+        self.scaler = PerFeatureMinMaxScaler(feature_range=normalization_range, axis=1)
     
     def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], folder_data: str = 'train') -> tuple[np.ndarray, np.ndarray]:
         data_list = []
@@ -92,7 +133,8 @@ class PrecipitationDataModule(LightningDataModule):
             dataset = xr.open_dataset(self.data_dir / 'predictors' / folder_data / feature)
             data_list.append(dataset[list(dataset.data_vars)[0]].values)
         
-        target = xr.open_dataset(self.data_dir / 'observation' / 'obs_precip_train.nc' if folder_data == 'train' else 'obs_precip_test.nc')
+        target_filename = 'obs_precip_train.nc' if folder_data == 'train' else 'obs_precip_test.nc'
+        target = xr.open_dataset(self.data_dir / 'observation' / target_filename)
              
         return np.stack(data_list, axis=1), target['precipitationCal'].values
     
@@ -108,46 +150,48 @@ class PrecipitationDataModule(LightningDataModule):
             timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
             self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[self.fold]
             
-            self.dataset_train = torch.from_numpy(data_array_train).float()
-            self.target_train = torch.from_numpy(target_array_train).float()
+            dataset = self.scaler.fit_transform(data_array_train)
+            
+            dataset = torch.from_numpy(dataset).float()
+            target = torch.from_numpy(target_array_train).float()
+            
+            self.train_data = dataset[self.cv_fold[0]]
+            self.train_target = target[self.cv_fold[0]]
+            self.val_data = dataset[self.cv_fold[1]]
+            self.val_target = target[self.cv_fold[1]]
+            
         if stage == 'test' or stage is None:
-            data_array_test,target_array_test = self.load_and_concat(feature_set_test, 'test')
-            self.dataset_test = torch.from_numpy(data_array_test).float()
-            self.target_test = torch.from_numpy(target_array_test).float()
+            data_array_test, target_array_test = self.load_and_concat(feature_set_test, 'test')
+            
+            dataset_test = self.scaler.transform(data_array_test)
+            
+            self.test_data = torch.from_numpy(dataset_test).float()
+            self.test_target = torch.from_numpy(target_array_test).float()
     
     def train_dataloader(self) -> DataLoader:
-        train_data = self.dataset_train[self.cv_fold[0]]
-        train_target = self.target_train[self.cv_fold[0]]
-        
         if self.trainer and self.trainer.on_gpu:
-            train_data = train_data.cuda()
-            train_target = train_target.cuda()
+            self.train_data = self.train_data.cuda()
+            self.train_target = self.train_target.cuda()
         
-        dataset = TensorDataset(train_data, train_target)
+        dataset = TensorDataset(self.train_data, self.train_target)
             
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=0)
     
     def val_dataloader(self) -> DataLoader:
-        val_data = self.dataset_train[self.cv_fold[1]]
-        val_target = self.target_train[self.cv_fold[1]]
-        
         if self.trainer and self.trainer.on_gpu:
-            val_data = val_data.cuda()
-            val_target = val_target.cuda()
+            self.val_data = self.val_data.cuda()
+            self.val_target = self.val_target.cuda()
         
-        dataset = TensorDataset(val_data, val_target)
+        dataset = TensorDataset(self.val_data, self.val_target)
             
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
     
     def test_dataloader(self) -> DataLoader:
-        test_data = self.dataset_test
-        test_target = self.target_test
-        
         if self.trainer and self.trainer.on_gpu:
-            test_data = test_data.cuda()
-            test_data = test_data.cuda()
+            self.test_data = self.test_data.cuda()
+            self.test_target = self.test_target.cuda()
         
-        dataset = TensorDataset(test_data, test_target)
+        dataset = TensorDataset(self.test_data, self.test_target)
             
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
 
@@ -155,6 +199,9 @@ class PrecipitationDataModule(LightningDataModule):
 if __name__ == "__main__":
     data = PrecipitationDataModule()
     data.setup(stage='fit')
-    data.train_dataloader()
-    data.val_dataloader()
-    data.test_dataloader()
+    
+    train_loader = data.train_dataloader()
+    # data.val_dataloader()
+    data.setup(stage='test')
+    test_loader = data.test_dataloader()
+    print('Done')
