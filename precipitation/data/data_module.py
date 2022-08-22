@@ -201,7 +201,7 @@ if __name__ == "__main__":
     data.setup(stage='fit')
     
     train_loader = data.train_dataloader()
-    # data.val_dataloader()
+    val_loader = data.val_dataloader()
     data.setup(stage='test')
     test_loader = data.test_dataloader()
     print('Done')
