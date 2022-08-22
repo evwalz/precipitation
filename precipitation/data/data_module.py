@@ -1,8 +1,10 @@
 from pathlib import Path
 import numpy as np
 import xarray as xr
+import torch
 from dataclasses import dataclass
 from sklearn.model_selection import TimeSeriesSplit
+from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning import LightningDataModule
 
 
@@ -84,13 +86,15 @@ class PrecipitationDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.fold = fold
     
-    def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], stage: str | None = 'train') -> np.ndarray:
+    def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], folder_data: str = 'train') -> tuple[np.ndarray, np.ndarray]:
         data_list = []
         for feature in list_of_features:
-            dataset = xr.open_dataset(self.data_dir / 'predictors' / stage / feature)  # type: ignore
+            dataset = xr.open_dataset(self.data_dir / 'predictors' / folder_data / feature)
             data_list.append(dataset[list(dataset.data_vars)[0]].values)
+        
+        target = xr.open_dataset(self.data_dir / 'observation' / 'obs_precip_train.nc' if folder_data == 'train' else 'obs_precip_test.nc')
              
-        return np.stack(data_list, axis=1)
+        return np.stack(data_list, axis=1), target['precipitationCal'].values
     
     def setup(self, stage: str | None = None) -> None:
         self.data = PrecipitationDataPaths()
@@ -99,17 +103,32 @@ class PrecipitationDataModule(LightningDataModule):
         else:
             raise NotImplementedError(f"Feature set {self.feature_set} is not implemented.")
         
-        if stage == 'train':
-            data_array = self.load_and_concat(feature_set_train, stage)
-        else:
-            data_array = self.load_and_concat(feature_set_test, stage)
+        if stage == 'fit' or stage is None:
+            data_array_train, target_array_train = self.load_and_concat(feature_set_train, 'train')
+            timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
+            self.cv_splits = list(timeseries_cv_splitter.split(data_array_train))
             
-        timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
-        self.cv_splits = list(timeseries_cv_splitter.split(data_array))
+            self.dataset_train = torch.from_numpy(data_array_train).float()
+            self.target_train = torch.from_numpy(target_array_train).float()
+        if stage == 'test' or stage is None:
+            data_array_test,target_array_test = self.load_and_concat(feature_set_test, 'test')
+            self.dataset_test = torch.from_numpy(data_array_test).float()
+            self.target_test = torch.from_numpy(target_array_test).float()
+            
         
-        self.dataset = data_array
+        
+        # TODO:
+        # move below to train/val dataloader
     
-    def train_dataloader(self) -> list:
+        # if self.trainer.on_gpu:
+            # self.dataset = self.dataset.cuda()
+        
+        # self.dataset = TensorDataset(self.dataset)
+    
+    
+    def train_dataloader(self) -> DataLoader:
+        
+        
         return self.data.subset_v1()
     
     def val_dataloader(self) -> list:
@@ -121,7 +140,7 @@ class PrecipitationDataModule(LightningDataModule):
 
 if __name__ == "__main__":
     data = PrecipitationDataModule()
-    data.setup(stage='train')
+    data.setup(stage='fit')
     data.train_dataloader()
     data.val_dataloader()
     data.test_dataloader()
