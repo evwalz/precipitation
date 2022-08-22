@@ -106,7 +106,7 @@ class PrecipitationDataModule(LightningDataModule):
         if stage == 'fit' or stage is None:
             data_array_train, target_array_train = self.load_and_concat(feature_set_train, 'train')
             timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
-            self.cv_splits = list(timeseries_cv_splitter.split(data_array_train))
+            self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[self.fold]
             
             self.dataset_train = torch.from_numpy(data_array_train).float()
             self.target_train = torch.from_numpy(target_array_train).float()
@@ -114,28 +114,42 @@ class PrecipitationDataModule(LightningDataModule):
             data_array_test,target_array_test = self.load_and_concat(feature_set_test, 'test')
             self.dataset_test = torch.from_numpy(data_array_test).float()
             self.target_test = torch.from_numpy(target_array_test).float()
-            
-        
-        
-        # TODO:
-        # move below to train/val dataloader
-    
-        # if self.trainer.on_gpu:
-            # self.dataset = self.dataset.cuda()
-        
-        # self.dataset = TensorDataset(self.dataset)
-    
     
     def train_dataloader(self) -> DataLoader:
+        train_data = self.dataset_train[self.cv_fold[0]]
+        train_target = self.target_train[self.cv_fold[0]]
         
+        if self.trainer and self.trainer.on_gpu:
+            train_data = train_data.cuda()
+            train_target = train_target.cuda()
         
-        return self.data.subset_v1()
+        dataset = TensorDataset(train_data, train_target)
+            
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=0)
     
-    def val_dataloader(self) -> list:
-        return self.data.subset_v1()
+    def val_dataloader(self) -> DataLoader:
+        val_data = self.dataset_train[self.cv_fold[1]]
+        val_target = self.target_train[self.cv_fold[1]]
+        
+        if self.trainer and self.trainer.on_gpu:
+            val_data = val_data.cuda()
+            val_target = val_target.cuda()
+        
+        dataset = TensorDataset(val_data, val_target)
+            
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
     
-    def test_dataloader(self) -> list:
-        return self.data.subset_v1()
+    def test_dataloader(self) -> DataLoader:
+        test_data = self.dataset_test
+        test_target = self.target_test
+        
+        if self.trainer and self.trainer.on_gpu:
+            test_data = test_data.cuda()
+            test_data = test_data.cuda()
+        
+        dataset = TensorDataset(test_data, test_target)
+            
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
 
 
 if __name__ == "__main__":
