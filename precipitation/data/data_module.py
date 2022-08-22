@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from dataclasses import dataclass
+from sklearn.model_selection import TimeSeriesSplit
 from pytorch_lightning import LightningDataModule
 
 
@@ -66,7 +67,7 @@ class PrecipitationDataPaths:
     path_geo850_test = 'geo850_4pm_2018_2019.nc'
         
     
-    def subset_v1(self) -> tuple[list, list]:
+    def subset_v1(self) -> tuple[list[str], list[str]]:
         train = [self.path_kindx_train, self.path_corr1_train, self.path_pw_train, self.path_cape_train,
                  self.path_rh8_train, self.path_d2m_train, self.path_geodiff_train, self.path_sp_train]
         test = [self.path_kindx_test, self.path_corr1_test, self.path_pw_test, self.path_cape_test,
@@ -76,17 +77,17 @@ class PrecipitationDataPaths:
     
 
 class PrecipitationDataModule(LightningDataModule):
-    def __init__(self, data_dir: str | Path = '~/datasets/precipitation', feature_set: str = 'v1', batch_size: int = 32, fold: int = 0,  **kwargs):
+    def __init__(self, data_dir: str = '~/datasets/precipitation', feature_set: str = 'v1', batch_size: int = 32, fold: int = 0,  **kwargs):
         super().__init__()
         self.data_dir = Path(data_dir)
         self.feature_set = feature_set
         self.batch_size = batch_size
         self.fold = fold
     
-    def load_and_concat(self, list_of_features: list = ['kindx_2000_2017.nc'], stage: str | None = 'train') -> np.ndarray:
+    def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], stage: str | None = 'train') -> np.ndarray:
         data_list = []
         for feature in list_of_features:
-            dataset = xr.open_dataset(self.data_dir / 'predictors' / stage / feature)
+            dataset = xr.open_dataset(self.data_dir / 'predictors' / stage / feature)  # type: ignore
             data_list.append(dataset[list(dataset.data_vars)[0]].values)
              
         return np.stack(data_list, axis=1)
@@ -95,10 +96,16 @@ class PrecipitationDataModule(LightningDataModule):
         self.data = PrecipitationDataPaths()
         if self.feature_set == 'v1':
             feature_set_train, feature_set_test = self.data.subset_v1()
+        else:
+            raise NotImplementedError(f"Feature set {self.feature_set} is not implemented.")
+        
         if stage == 'train':
             data_array = self.load_and_concat(feature_set_train, stage)
         else:
             data_array = self.load_and_concat(feature_set_test, stage)
+            
+        timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
+        self.cv_splits = list(timeseries_cv_splitter.split(data_array))
         
         self.dataset = data_array
     
@@ -114,7 +121,7 @@ class PrecipitationDataModule(LightningDataModule):
 
 if __name__ == "__main__":
     data = PrecipitationDataModule()
-    data.setup(stage='test')
+    data.setup(stage='train')
     data.train_dataloader()
     data.val_dataloader()
     data.test_dataloader()
