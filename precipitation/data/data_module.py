@@ -183,7 +183,10 @@ class PrecipitationDataModule(LightningDataModule):
         data_list = []
         for feature in list_of_features:
             dataset = xr.open_dataset(self.data_dir / 'predictors' / folder_data / feature)
-            data_list.append(dataset[list(dataset.data_vars)[0]].values)
+            data_array = dataset[list(dataset.data_vars)[0]].values
+            if 'corr_' in feature:
+                data_array = np.log(data_array + 0.001)
+            data_list.append(data_array)
         
         target_filename = 'obs_precip_train.nc' if folder_data == 'train' else 'obs_precip_test.nc'
         target = xr.open_dataset(self.data_dir / 'observation' / target_filename)
