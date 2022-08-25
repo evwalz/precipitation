@@ -2,9 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.utilities.cli import LightningCLI
-
 from precipitation.data.data_module import PrecipitationDataModule
 
 

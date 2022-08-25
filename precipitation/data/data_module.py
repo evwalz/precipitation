@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from sklearn.model_selection import TimeSeriesSplit
 from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning import LightningDataModule
-from pytorch_lightning.accelerators import CUDAAccelerator
+from pytorch_lightning.accelerators.cuda import CUDAAccelerator
 
 
 @dataclass
