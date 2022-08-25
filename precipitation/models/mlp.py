@@ -12,14 +12,15 @@ class PrecipitationMLP(pl.LightningModule):
     def __init__(self, learning_rate: float=0.01, **kwargs):
         super().__init__()
         self.mlp = nn.Sequential(
-            nn.Linear(19 * 61, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 1)
+            nn.Linear(19 * 61, 128), nn.ReLU(),
+            nn.Linear(128, 128), nn.ReLU(),
+            nn.Linear(128, 1)
         )
         
         self.save_hyperparameters()
 
     def training_step(self, batch: tuple[torch.FloatTensor, torch.FloatTensor], batch_idx: int):
-        # --------------------------
-        # REPLACE WITH YOUR OWN
+        
         x, y = batch
         b, c, h, w = x.size()
         x = x.view(b, c, -1)
@@ -30,8 +31,7 @@ class PrecipitationMLP(pl.LightningModule):
         return loss
 
     def validation_step(self, batch: tuple[torch.FloatTensor, torch.FloatTensor], batch_idx: int) -> None:
-        # --------------------------
-        # REPLACE WITH YOUR OWN
+        
         x, y = batch
         b, c, h, w = x.size()
         x = x.view(b, c, -1)
