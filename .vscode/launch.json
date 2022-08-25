@@ -41,6 +41,10 @@
                 "100",
                 "--trainer.logger",
                 "False",
+                "--trainer.accelerator",
+                "gpu",
+                "--data.feature_set",
+                "v1+time",
             ]
         },
     ]
