@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import xarray as xr
+import pandas as pd
 import torch
 from dataclasses import dataclass
 from sklearn.model_selection import TimeSeriesSplit
@@ -179,13 +180,24 @@ class PrecipitationDataModule(LightningDataModule):
         else:
             raise NotImplementedError('Scaler {} is not implemented.'.format(scaler))
     
-    def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], folder_data: str = 'train') -> tuple[np.ndarray, np.ndarray]:
+    def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], add_time: bool = False, folder_data: str = 'train') -> tuple[np.ndarray, np.ndarray]:
         data_list = []
-        for feature in list_of_features:
+        for i, feature in enumerate(list_of_features):
             dataset = xr.open_dataset(self.data_dir / 'predictors' / folder_data / feature)
             data_array = dataset[list(dataset.data_vars)[0]].values
+            
             if 'corr_' in feature:
                 data_array = np.log(data_array + 0.001)
+                
+            if add_time and i == 0:
+                days_oty = pd.date_range(start=dataset.time.values[0], end=dataset.time.values[-1], freq='D').dayofyear.to_numpy() - 1  # type: ignore
+                days_oty = np.tile(np.expand_dims(days_oty, (1,2)), (1,data_array.shape[1],data_array.shape[2]))
+                time_encoding_1 = np.sin(2 * np.pi * days_oty / 365)
+                time_encoding_2 = np.cos(2 * np.pi * days_oty / 365)
+                
+                data_list.append(time_encoding_1)
+                data_list.append(time_encoding_2)
+            
             data_list.append(data_array)
         
         target_filename = 'obs_precip_train.nc' if folder_data == 'train' else 'obs_precip_test.nc'
@@ -197,11 +209,15 @@ class PrecipitationDataModule(LightningDataModule):
         self.data = PrecipitationDataPaths()
         if self.feature_set == 'v1':
             feature_set_train, feature_set_test = self.data.subset_v1()
+            add_time = False
+        elif self.feature_set == 'v1+time':
+            feature_set_train, feature_set_test = self.data.subset_v1()
+            add_time = True
         else:
             raise NotImplementedError(f"Feature set {self.feature_set} is not implemented.")
         
         if stage == 'fit' or stage is None:
-            data_array_train, target_array_train = self.load_and_concat(feature_set_train, 'train')
+            data_array_train, target_array_train = self.load_and_concat(feature_set_train, add_time=add_time, folder_data='train')
             timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
             self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[self.fold]
             
@@ -216,7 +232,7 @@ class PrecipitationDataModule(LightningDataModule):
             self.val_target = target[self.cv_fold[1]]
             
         if stage == 'test' or stage is None:
-            data_array_test, target_array_test = self.load_and_concat(feature_set_test, 'test')
+            data_array_test, target_array_test = self.load_and_concat(feature_set_test, add_time=add_time, folder_data='test')
             
             dataset_test = self.scaler.transform(data_array_test)
             
@@ -261,7 +277,7 @@ class PrecipitationDataModule(LightningDataModule):
 
 
 if __name__ == "__main__":
-    data = PrecipitationDataModule()
+    data = PrecipitationDataModule(feature_set='v1+time')
     data.setup(stage='fit')
     
     train_loader = data.train_dataloader()
