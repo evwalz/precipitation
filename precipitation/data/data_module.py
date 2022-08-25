@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from sklearn.model_selection import TimeSeriesSplit
 from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning import LightningDataModule
+from pytorch_lightning.accelerators import CUDAAccelerator
 
 
 @dataclass
@@ -102,6 +103,10 @@ class PerFeatureMinMaxScaler:
             new_data[:, i] = (data[:, i] - self.min[i]) / (self.max[i] - self.min[i]) * (self.feature_range[1] - self.feature_range[0]) + self.feature_range[0]
             
         return new_data
+    
+    def fit_transform(self, data: np.ndarray) -> np.ndarray:
+        self.fit(data)
+        return self.transform(data)
 
     def inverse_transform(self, data: np.ndarray) -> np.ndarray:
         if self.min is None or self.max is None:
@@ -111,21 +116,67 @@ class PerFeatureMinMaxScaler:
             new_data[:, i] = (data[:, i] - self.feature_range[0]) / (self.feature_range[1] - self.feature_range[0]) * (self.max[i] - self.min[i]) + self.min[i]
             
         return new_data
+
+
+class PerFeatureMeanStdScaler:
+    def __init__(self, axis: int = 1) -> None:
+        self.axis = axis
+        self.mean = None
+        self.std = None
     
+    def fit(self, data: np.ndarray) -> None:
+        self.n_features = data.shape[self.axis]
+        self.mean = np.zeros(self.n_features)
+        self.std = np.zeros(self.n_features)
+        
+        for i in range(self.n_features):
+            self.mean[i] = data[:, i].mean()
+            self.std[i] = data[:, i].std()
+    
+    def transform(self, data: np.ndarray) -> np.ndarray:
+        if self.mean is None or self.std is None:
+            raise ValueError('You must call fit before transform or inverse transform.')
+        new_data = np.zeros(data.shape)
+        for i in range(self.n_features):
+            if self.std[i] == 0:
+                new_data[:, i] = data[:, i] - self.mean[i]
+            else:
+                new_data[:, i] = (data[:, i] - self.mean[i]) / self.std[i]
+            
+        return new_data
+
     def fit_transform(self, data: np.ndarray) -> np.ndarray:
         self.fit(data)
         return self.transform(data)
 
+    def inverse_transform(self, data: np.ndarray) -> np.ndarray:
+        if self.mean is None or self.std is None:
+            raise ValueError('You must call fit before transform or inverse transform.')
+        new_data = np.zeros(data.shape)
+        for i in range(self.n_features):
+            if self.std[i] == 0:
+                new_data[:, i] = data[:, i] + self.mean[i]
+            else:
+                new_data[:, i] = (data[:, i] * self.std[i]) + self.mean[i]
+            
+        return new_data
+
 
 class PrecipitationDataModule(LightningDataModule):
-    def __init__(self, data_dir: str = '~/datasets/precipitation', feature_set: str = 'v1', normalization_range: tuple[float, float] = (-1, 1), batch_size: int = 32, fold: int = 0,  **kwargs):
+    def __init__(self, data_dir: str = '~/datasets/precipitation', feature_set: str = 'v1', batch_size: int = 32, fold: int = 0,
+                 scaler: str = 'mean-std', normalization_range: tuple[float, float] = (-1, 1), **kwargs):
         super().__init__()
         self.data_dir = Path(data_dir)
         self.feature_set = feature_set
         self.batch_size = batch_size
         self.fold = fold
         
-        self.scaler = PerFeatureMinMaxScaler(feature_range=normalization_range, axis=1)
+        if scaler == 'min-max':
+            self.scaler = PerFeatureMinMaxScaler(feature_range=normalization_range, axis=1)
+        elif scaler == 'mean-std':
+            self.scaler = PerFeatureMeanStdScaler(axis=1)
+        else:
+            raise NotImplementedError('Scaler {} is not implemented.'.format(scaler))
     
     def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], folder_data: str = 'train') -> tuple[np.ndarray, np.ndarray]:
         data_list = []
@@ -169,7 +220,7 @@ class PrecipitationDataModule(LightningDataModule):
             self.test_target = torch.from_numpy(target_array_test).float()
     
     def train_dataloader(self) -> DataLoader:
-        if self.trainer and self.trainer.gpus > 0:
+        if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):
             self.train_data = self.train_data.cuda()
             self.train_target = self.train_target.cuda()
         
@@ -178,7 +229,7 @@ class PrecipitationDataModule(LightningDataModule):
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=0)
     
     def val_dataloader(self) -> DataLoader:
-        if self.trainer and self.trainer.gpus > 0:
+        if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):
             self.val_data = self.val_data.cuda()
             self.val_target = self.val_target.cuda()
         
@@ -187,7 +238,7 @@ class PrecipitationDataModule(LightningDataModule):
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
     
     def test_dataloader(self) -> DataLoader:
-        if self.trainer and self.trainer.gpus > 0:
+        if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):
             self.test_data = self.test_data.cuda()
             self.test_target = self.test_target.cuda()
         
