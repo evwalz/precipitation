@@ -39,6 +39,8 @@
                 "0.0003",
                 "--trainer.max_epochs",
                 "100",
+                "--trainer.logger",
+                "False",
             ]
         },
     ]
