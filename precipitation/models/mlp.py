@@ -51,6 +51,6 @@ if __name__ == "__main__":
         PrecipitationMLP,
         datamodule_class=PrecipitationDataModule,
         auto_registry=True,
-        trainer_defaults={"gpus": 0, "max_epochs": 5, "logger": wandb_logger},
+        trainer_defaults={"accelerator": "auto", "devices": [0], "max_epochs": 5, "logger": wandb_logger},
         save_config_overwrite=True,
     )
