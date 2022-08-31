@@ -179,6 +179,15 @@ class PrecipitationDataModule(LightningDataModule):
             self.scaler = PerFeatureMeanStdScaler(axis=1)
         else:
             raise NotImplementedError('Scaler {} is not implemented.'.format(scaler))
+        
+    @property
+    def n_features(self) -> int:
+        if self.feature_set == 'v1':
+            return 8
+        elif self.feature_set == 'v1+time':
+            return 10
+        else:
+            raise NotImplementedError('Feature set {} is not implemented.'.format(self.feature_set))
     
     def load_and_concat(self, list_of_features: list[str] = ['kindx_2000_2017.nc'], add_time: bool = False, folder_data: str = 'train') -> tuple[np.ndarray, np.ndarray]:
         data_list = []
