@@ -27,7 +27,7 @@ class PrecipitationMLP(pl.LightningModule):
         x = x.view(b, -1)
         
         y_hat = self.mlp(x)
-        y_hat = y_hat.view(b, self.hparams.grid_lat, self.hparams.grid_lon)
+        y_hat = y_hat.view(b, self.hparams.grid_lat, self.hparams.grid_lon)  # type: ignore
         
         loss = F.mse_loss(y_hat, y)
         self.log("train_loss", loss)
@@ -40,7 +40,7 @@ class PrecipitationMLP(pl.LightningModule):
         x = x.view(b, -1)
         
         y_hat = self.mlp(x)
-        y_hat = y_hat.view(b, self.hparams.grid_lat, self.hparams.grid_lon)
+        y_hat = y_hat.view(b, self.hparams.grid_lat, self.hparams.grid_lon)  # type: ignore
         
         loss = F.mse_loss(y_hat, y)
         mae = self.mae_metric(y_hat, y)
