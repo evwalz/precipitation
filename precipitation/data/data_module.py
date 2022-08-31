@@ -162,6 +162,30 @@ class PerFeatureMeanStdScaler:
                 new_data[:, i] = (data[:, i] * self.std[i]) + self.mean[i]
             
         return new_data
+    
+
+class TargetMaxScaler:
+    def __init__(self) -> None:
+        self.max = None
+    
+    def fit(self, data: np.ndarray) -> None:
+        self.max = data.max()
+    
+    def transform(self, data: np.ndarray) -> np.ndarray:
+        if self.max is None:
+            raise ValueError('You must call fit before transform or inverse transform.')
+        new_data = data / (self.max + 0.001)    
+        return new_data
+
+    def fit_transform(self, data: np.ndarray) -> np.ndarray:
+        self.fit(data)
+        return self.transform(data)
+
+    def inverse_transform(self, data: np.ndarray) -> np.ndarray:
+        if self.max is None:
+            raise ValueError('You must call fit before transform or inverse transform.')
+        new_data = data * (self.max + 0.001)
+        return new_data
 
 
 class PrecipitationDataModule(LightningDataModule):
@@ -174,11 +198,12 @@ class PrecipitationDataModule(LightningDataModule):
         self.fold = fold
         
         if scaler == 'min-max':
-            self.scaler = PerFeatureMinMaxScaler(feature_range=normalization_range, axis=1)
+            self.scaler_inputs = PerFeatureMinMaxScaler(feature_range=normalization_range, axis=1)
         elif scaler == 'mean-std':
-            self.scaler = PerFeatureMeanStdScaler(axis=1)
+            self.scaler_inputs = PerFeatureMeanStdScaler(axis=1)
         else:
             raise NotImplementedError('Scaler {} is not implemented.'.format(scaler))
+        self.scaler_target = TargetMaxScaler()
         
     @property
     def n_features(self) -> int:
@@ -230,10 +255,11 @@ class PrecipitationDataModule(LightningDataModule):
             timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
             self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[self.fold]
             
-            dataset = self.scaler.fit_transform(data_array_train)
+            dataset = self.scaler_inputs.fit_transform(data_array_train)
+            target = self.scaler_target.fit_transform(target_array_train)
             
             dataset = torch.from_numpy(dataset).float()
-            target = torch.from_numpy(target_array_train).float()
+            target = torch.from_numpy(target).float()
             
             self.train_data = dataset[self.cv_fold[0]]
             self.train_target = target[self.cv_fold[0]]
@@ -243,10 +269,11 @@ class PrecipitationDataModule(LightningDataModule):
         if stage == 'test' or stage is None:
             data_array_test, target_array_test = self.load_and_concat(feature_set_test, add_time=add_time, folder_data='test')
             
-            dataset_test = self.scaler.transform(data_array_test)
+            dataset_test = self.scaler_inputs.transform(data_array_test)
+            target_test = self.scaler_target.transform(target_array_test)
             
             self.test_data = torch.from_numpy(dataset_test).float()
-            self.test_target = torch.from_numpy(target_array_test).float()
+            self.test_target = torch.from_numpy(target_test).float()
     
     def train_dataloader(self) -> DataLoader:
         if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):

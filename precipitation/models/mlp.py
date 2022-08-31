@@ -44,7 +44,7 @@ class PrecipitationMLP(pl.LightningModule):
         
         loss = F.mse_loss(y_hat, y)
         mae = self.mae_metric(y_hat, y)
-        self.log_dict({"val_loss": loss, "val_mae": mae})
+        self.log_dict({"val_loss": loss, "val_mae": mae}, on_step=False, on_epoch=True)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams_initial.learning_rate)  # type: ignore
@@ -52,6 +52,8 @@ class PrecipitationMLP(pl.LightningModule):
 
 
 if __name__ == "__main__":
+    import wandb
+    wandb.finish()
     wandb_logger = WandbLogger(project="dummy-MLP", log_model="all", dir="logs")
     pl.seed_everything(123)
     cli = LightningCLI(
