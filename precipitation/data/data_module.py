@@ -213,19 +213,25 @@ class TargetLogScaler:
     def __init__(self, offset: float = 0.01) -> None:
         self.offset = offset
 
-    def fit(self, data: np.ndarray) -> None:
+    def fit(self, data: np.ndarray | torch.Tensor) -> None:
         pass
 
-    def transform(self, data: np.ndarray) -> np.ndarray:
-        new_data = np.log(data + self.offset)
+    def transform(self, data: np.ndarray | torch.Tensor) -> np.ndarray | torch.Tensor:
+        if isinstance(data, torch.Tensor):
+            new_data = torch.log(data + self.offset)
+        else:
+            new_data = np.log(data + self.offset)
         return new_data
 
-    def fit_transform(self, data: np.ndarray) -> np.ndarray:
+    def fit_transform(self, data: np.ndarray | torch.Tensor) -> np.ndarray | torch.Tensor:
         self.fit(data)
         return self.transform(data)
 
-    def inverse_transform(self, data: np.ndarray) -> np.ndarray:
-        new_data = np.exp(data) - self.offset
+    def inverse_transform(self, data: np.ndarray | torch.Tensor) -> np.ndarray | torch.Tensor:
+        if isinstance(data, torch.Tensor):
+            new_data = torch.exp(data) - self.offset
+        else:
+            new_data = np.exp(data) - self.offset
         return new_data
 
 
