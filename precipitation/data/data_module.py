@@ -89,20 +89,28 @@ class PrecipitationDataPaths:
             self.path_corr1_train,
             self.path_pw_train,
             self.path_cape_train,
-            self.path_rh8_train,
+            self.path_sh925_train,
             self.path_d2m_train,
             self.path_geodiff_train,
             self.path_sp_train,
+            self.path_sh7_train,
+            self.path_vertvelo_train,
+            self.path_clwc_train,
+            self.path_toa_train
         ]
         test = [
             self.path_kindx_test,
             self.path_corr1_test,
             self.path_pw_test,
             self.path_cape_test,
-            self.path_rh8_test,
+            self.path_sh925_test,
             self.path_d2m_test,
             self.path_geodiff_test,
             self.path_sp_test,
+            self.path_sh7_test,
+            self.path_vertvelo_test,
+            self.path_clwc_test,
+            self.path_toa_test,
         ]
 
         return train, test
