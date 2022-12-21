@@ -115,7 +115,7 @@ class PrecipitationMLP(pl.LightningModule):
             # mean_masked_crps = np.mean(masked_crps)
             mean_masked_crps = np.mean(crps_list)
             
-            self.log_dict({"masked_crps": mean_masked_crps})
+            self.log_dict({"val_masked_crps": mean_masked_crps})
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams_initial.learning_rate, weight_decay=self.hparams.weight_decay)  # type: ignore
