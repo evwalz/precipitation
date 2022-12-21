@@ -407,27 +407,34 @@ class PrecipitationDataModule(LightningDataModule):
             dataset, batch_size=self.batch_size, shuffle=True, num_workers=0
         )
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> DataLoader | list[DataLoader]:
         if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):
             self.train_data = self.train_data.to(torch.device("cuda"))
             self.train_target = self.train_target.to(torch.device("cuda"))
+            self.val_data = self.val_data.to(torch.device("cuda"))
+            self.val_target = self.val_target.to(torch.device("cuda"))
         if self.trainer and isinstance(self.trainer.accelerator, MPSAccelerator):
             self.train_data = self.train_data.to(torch.device("mps"))
             self.train_target = self.train_target.to(torch.device("mps"))
+            self.val_data = self.val_data.to(torch.device("mps"))
+            self.val_target = self.val_target.to(torch.device("mps"))
+            
+        val_dataset = TensorDataset(self.val_data, self.val_target)
+        train_dataset = TensorDataset(self.train_data, self.train_target)
 
-        dataset = TensorDataset(self.val_data, self.val_target)
+        val_set_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        train_set_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        
+        return [val_set_loader, train_set_loader]
 
-        return DataLoader(
-            dataset, batch_size=self.batch_size, shuffle=False, num_workers=0
-        )
 
     def test_dataloader(self) -> DataLoader:
         if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):
-            self.train_data = self.train_data.to(torch.device("cuda"))
-            self.train_target = self.train_target.to(torch.device("cuda"))
+            self.test_data = self.test_data.to(torch.device("cuda"))
+            self.test_target = self.test_target.to(torch.device("cuda"))
         if self.trainer and isinstance(self.trainer.accelerator, MPSAccelerator):
-            self.train_data = self.train_data.to(torch.device("mps"))
-            self.train_target = self.train_target.to(torch.device("mps"))
+            self.test_data = self.test_data.to(torch.device("mps"))
+            self.test_target = self.test_target.to(torch.device("mps"))
 
         dataset = TensorDataset(self.test_data, self.test_target)
 
