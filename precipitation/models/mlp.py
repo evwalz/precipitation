@@ -42,11 +42,13 @@ class PrecipitationMLP(pl.LightningModule):
         self.save_hyperparameters()
     
     def setup(self, stage: str | None = None) -> None:
-        lsm = xr.open_dataset(self.trainer.datamodule.data_dir / "lsm.nc")
-        threshold = 0.5
-        lsm = lsm.drop("time")
-        lsm_values =  lsm.lsm.values[0,:,:]
-        self.mask = torch.tensor(np.where(lsm_values > threshold, 1, 0))
+        #lsm = xr.open_dataset(self.trainer.datamodule.data_dir / "lsm.nc")
+        #threshold = 0.5
+        #lsm = lsm.drop("time")
+        #lsm_values =  lsm.lsm.values[0,:,:]
+        #self.mask = torch.tensor(np.where(lsm_values > threshold, 1, 0))
+        lsm = np.loadtxt(self.trainer.datamodule.data_dir / "lsm.txt")
+        self.mask = torch.tensor(lsm)
         if self.trainer and isinstance(self.trainer.accelerator, CUDAAccelerator):
             self.mask = self.mask.to(torch.device("cuda"))
         if self.trainer and isinstance(self.trainer.accelerator, MPSAccelerator):
