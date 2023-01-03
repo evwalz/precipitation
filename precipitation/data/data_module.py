@@ -9,7 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.accelerators.cuda import CUDAAccelerator
 from pytorch_lightning.accelerators.mps import MPSAccelerator
-
+import pickle
 
 @dataclass
 class PrecipitationDataPaths:
@@ -344,10 +344,14 @@ class PrecipitationDataModule(LightningDataModule):
             data_array_train, target_array_train = self.load_and_concat(
                 feature_set_train, add_time=add_time, folder_data="train"
             )
-            timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
-            self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[
-                self.fold
-            ]
+            #timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
+            #self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[
+            #    self.fold
+            #]
+            with open('split_train_folds.pickle', 'rb') as f:
+                X = pickle.load(f)
+            timeseries_cv_split_manual = X[0:7]
+            self.cv_fold = timeseries_cv_split_manual[self.fold]
 
             dataset = self.scaler_inputs.fit_transform(data_array_train)
             target = self.scaler_target.fit_transform(target_array_train)
