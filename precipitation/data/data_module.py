@@ -302,9 +302,9 @@ class PrecipitationDataModule(LightningDataModule):
     @property
     def n_features(self) -> int:
         if self.feature_set == "v1":
-            return 8
+            return 22
         elif self.feature_set == "v1+time":
-            return 10
+            return 24
         else:
             raise NotImplementedError(
                 "Feature set {} is not implemented.".format(self.feature_set)
@@ -323,7 +323,7 @@ class PrecipitationDataModule(LightningDataModule):
             )
             data_array = dataset[list(dataset.data_vars)[0]].values
 
-            if "corr_" in feature:
+            if "corr_lag" in feature:
                 data_array = np.log(data_array + 0.001)
 
             if add_time and i == 0:
@@ -370,7 +370,7 @@ class PrecipitationDataModule(LightningDataModule):
             #]
             with open('split_train_folds.pickle', 'rb') as f:
                 X = pickle.load(f)
-            timeseries_cv_split_manual = X[0:7]
+            timeseries_cv_split_manual = X[0:8]
             self.cv_fold = timeseries_cv_split_manual[self.fold]
 
             dataset = self.scaler_inputs.fit_transform(data_array_train)
