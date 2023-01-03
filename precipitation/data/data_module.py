@@ -75,7 +75,6 @@ class PrecipitationDataPaths:
             self.path_d2m_train,
             self.path_cin_train,
             self.path_vo7_train,
-            self.path_d2m_train,
             self.path_sh600_train,
             self.path_sh925_train,
             self.path_temp_train,
@@ -99,7 +98,6 @@ class PrecipitationDataPaths:
             self.path_d2m_test,
             self.path_cin_test,
             self.path_vo7_test,
-            self.path_d2m_test,
             self.path_sh600_test,
             self.path_sh925_test,
             self.path_temp_test,
@@ -302,9 +300,9 @@ class PrecipitationDataModule(LightningDataModule):
     @property
     def n_features(self) -> int:
         if self.feature_set == "v1":
-            return 22
+            return 21
         elif self.feature_set == "v1+time":
-            return 24
+            return 23
         else:
             raise NotImplementedError(
                 "Feature set {} is not implemented.".format(self.feature_set)
