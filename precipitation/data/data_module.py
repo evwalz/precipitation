@@ -35,8 +35,8 @@ class PrecipitationDataPaths:
     path_sh7_train = "spec_humid700_2000_2017.nc"
     path_sp_train = "surfpressure_2000_2017.nc"
     path_shear_train = "shear925_600_2000_2017.nc"
-    path_geodiff_train = "geodiff_corr_2000_2017.nc"
-    path_vertvelo_train = "vvmean_corr_2000_2017.nc"
+    #path_geodiff_train = "geodiff_corr_2000_2017.nc"
+    #path_vertvelo_train = "vvmean_corr_2000_2017.nc"
     
 
     path_corr1_test = "corr_lag1_test.nc"
@@ -58,8 +58,8 @@ class PrecipitationDataPaths:
     path_sh7_test = "spec_humid700_2018_2019.nc"
     path_sp_test = "surfpressure_2018_2019.nc"
     path_shear_test = "shear925_600_2018_2019.nc"
-    path_geodiff_test = "geodiff_corr_2018_2019.nc"
-    path_vertvelo_test = "vvmean_corr_2018_2019.nc"
+    #path_geodiff_test = "geodiff_corr_2018_2019.nc"
+    #path_vertvelo_test = "vvmean_corr_2018_2019.nc"
 
     def subset_v1(self) -> tuple[list[str], list[str]]:
         train = [
@@ -82,8 +82,8 @@ class PrecipitationDataPaths:
             self.path_sh7_train,
             self.path_sp_train,
             self.path_shear_train,
-            self.path_geodiff_train,
-            self.path_vertvelo_train,
+            #self.path_geodiff_train,
+            #self.path_vertvelo_train,
         ]
         test = [
             self.path_corr1_test,
@@ -105,8 +105,8 @@ class PrecipitationDataPaths:
             self.path_sh7_test,
             self.path_sp_test,
             self.path_shear_test,
-            self.path_geodiff_test,
-            self.path_vertvelo_test,
+            #self.path_geodiff_test,
+            #self.path_vertvelo_test,
         ]
 
         return train, test
