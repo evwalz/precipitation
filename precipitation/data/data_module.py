@@ -24,7 +24,7 @@ class PrecipitationDataPaths:
     path_cc_train = "cloudcover_2000_2018.nc"
     path_clwc_train = "cloudwater_2000_2018.nc"
     path_rh5_train = "rh500_2000_2018.nc"
-    path_rh3_train = "rh300_2000_2018.nc"
+    path_rh3_train = "rh300_update_2000_2018.nc"
     path_d2m_train = "d2m_2000_2018.nc"
     path_cin_train = "cin_2000_2018.nc"
     path_vo7_train = "relvor700_2000_2018.nc"
@@ -35,8 +35,10 @@ class PrecipitationDataPaths:
     path_sh7_train = "spec_humid700_2000_2018.nc"
     path_sp_train = "surfpressure_2000_2018.nc"
     path_shear_train = "shear925_600_2000_2018.nc"
+    # path_stream_train = "stream_2000_2018.nc"
     #path_geodiff_train = "geodiff_2000_2018.nc"
     #path_vertvelo_train = "vert_velocity_mean850_500_300_2000_2018.nc"
+    # path_vimd_train = "accum_vimd_2000_2018.nc"
     
 
     #path_corr1_test = "corr_lag1_test.nc"
@@ -47,7 +49,7 @@ class PrecipitationDataPaths:
     path_cc_test = "cloudcover_2019.nc"
     path_clwc_test = "cloudwater_2019.nc"
     path_rh5_test = "rh500_2019.nc"
-    path_rh3_test = "rh300_2019.nc"
+    path_rh3_test = "rh300_update_2019.nc"
     path_d2m_test = "d2m_2019.nc"
     path_cin_test = "cin_2019.nc"
     path_vo7_test = "relvor700_2019.nc"
@@ -58,8 +60,10 @@ class PrecipitationDataPaths:
     path_sh7_test = "spec_humid700_2019.nc"
     path_sp_test = "surfpressure_2019.nc"
     path_shear_test = "shear925_600_2019.nc"
+    # path_stream_test = "stream_2019.nc"
     #path_geodiff_test = "geodiff_2019.nc"
     #path_vertvelo_test = "vert_velocity_mean850_500_300_2019.nc"
+    # path_vimd_test = "accum_vimd_2019.nc"
 
     def subset_v1(self) -> tuple[list[str], list[str]]:
         train = [
@@ -84,6 +88,8 @@ class PrecipitationDataPaths:
             self.path_shear_train,
             #self.path_geodiff_train,
             #self.path_vertvelo_train,
+            #self.path_vimd_train,
+            #self.path_stream_train,
         ]
         test = [
             self.path_corr1_test,
@@ -107,6 +113,8 @@ class PrecipitationDataPaths:
             self.path_shear_test,
             #self.path_geodiff_test,
             #self.path_vertvelo_test,
+            #self.path_vimd_test,
+            #self.path_stream_test,
         ]
 
         return train, test
