@@ -6,7 +6,9 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 import isodisreg
+from precipitation.models.unet_architectures import UNet
 from isodisreg import idr
+from torchvision import transforms
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 from pytorch_lightning.accelerators.cuda import CUDAAccelerator
 from pytorch_lightning.accelerators.mps import MPSAccelerator
@@ -14,111 +16,8 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.cli import LightningCLI
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from precipitation.data.data_module import PrecipitationDataModule, TargetLogScaler
-
-
-class UNet(nn.Module):
-    def __init__(self, in_channels=14, initial_filter_size=64, kernel_size=3, do_instancenorm=True):
-        super().__init__()
-
-        self.contr_1_1 = self.contract(in_channels, initial_filter_size, kernel_size, stride=(1,3), instancenorm=do_instancenorm)
-        self.contr_1_2 = self.contract(initial_filter_size, initial_filter_size, kernel_size, stride=(1,1), instancenorm=do_instancenorm)
-        self.pool = nn.MaxPool2d(2, stride=2)
-
-        self.contr_2_1 = self.contract(initial_filter_size, initial_filter_size*2, kernel_size, instancenorm=do_instancenorm)
-        self.contr_2_2 = self.contract(initial_filter_size*2, initial_filter_size*2, kernel_size, instancenorm=do_instancenorm)
-
-        self.contr_3_1 = self.contract(initial_filter_size*2, initial_filter_size*2**2, kernel_size, instancenorm=do_instancenorm)
-        self.contr_3_2 = self.contract(initial_filter_size*2**2, initial_filter_size*2**2, kernel_size, instancenorm=do_instancenorm)
-
-        self.contr_4_1 = self.contract(initial_filter_size*2**2, initial_filter_size*2**3, kernel_size, instancenorm=do_instancenorm)
-        self.contr_4_2 = self.contract(initial_filter_size*2**3, initial_filter_size*2**3, kernel_size, instancenorm=do_instancenorm)
-
-        self.center = nn.Sequential(
-            nn.Conv2d(initial_filter_size*2**2, initial_filter_size*2**2, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(initial_filter_size*2**2, initial_filter_size*2**2, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(initial_filter_size*2**2, initial_filter_size*2**2, 2, stride=2, output_padding=(0,1)),
-            nn.ReLU(inplace=True),
-        )
-
-        self.expand_4_1 = self.expand(initial_filter_size*2**3, initial_filter_size*2**3)
-        self.expand_4_2 = self.expand(initial_filter_size*2**3, initial_filter_size*2**3)
-        self.upscale4 = nn.ConvTranspose2d(initial_filter_size*2**3, initial_filter_size*2**2, kernel_size=2, stride=2)
-
-        self.expand_3_1 = self.expand(initial_filter_size*2**3, initial_filter_size*2**2)
-        self.expand_3_2 = self.expand(initial_filter_size*2**2, initial_filter_size*2**2)
-        self.upscale3 = nn.ConvTranspose2d(initial_filter_size*2**2, initial_filter_size*2, 2, stride=2, output_padding=(1,0))
-
-        self.expand_2_1 = self.expand(initial_filter_size*2**2, initial_filter_size*2)
-        self.expand_2_2 = self.expand(initial_filter_size*2, initial_filter_size*2)
-        self.upscale2 = nn.ConvTranspose2d(initial_filter_size*2, initial_filter_size, 2, stride=(2, 2), output_padding=(1,1))
-
-        self.expand_1_1 = self.expand(initial_filter_size*2, initial_filter_size)
-        self.expand_1_2 = self.expand(initial_filter_size, initial_filter_size)
-        
-        self.upscale1 = nn.Sequential(
-            nn.ConvTranspose2d(initial_filter_size, initial_filter_size, 3, stride=(1,3), padding=(1,1)),
-            nn.ReLU(inplace=True)
-        )
-        
-        # Output layer for target
-        self.final = nn.Conv2d(initial_filter_size, 1, kernel_size=1)
-
-
-    @staticmethod
-    def contract(in_channels, out_channels, kernel_size=3, stride=1, instancenorm=True):
-        if instancenorm:
-            layer = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size, padding=1, stride=stride),
-                nn.InstanceNorm2d(out_channels),
-                nn.LeakyReLU(inplace=True))
-        else:
-            layer = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size, padding=1, stride=stride),
-                nn.LeakyReLU(inplace=True))
-        return layer
-
-    @staticmethod
-    def expand(in_channels, out_channels, kernel_size=3):
-        layer = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=1),
-            nn.LeakyReLU(inplace=True),
-            )
-        return layer
-
-    def forward(self, x, enable_concat=True):
-        concat_weight = 1
-        if not enable_concat:
-            concat_weight = 0
-
-        contr_1 = self.contr_1_2(self.contr_1_1(x))
-        pool = self.pool(contr_1)
-
-        contr_2 = self.contr_2_2(self.contr_2_1(pool))
-        pool = self.pool(contr_2)
-
-        contr_3 = self.contr_3_2(self.contr_3_1(pool))
-        pool = self.pool(contr_3)
-
-        center = self.center(pool) # actually there's an upsampling atrous conv here, watch out
-
-        concat = torch.cat([center, contr_3*concat_weight], 1)
-        expand = self.expand_3_2(self.expand_3_1(concat))
-        upscale = self.upscale3(expand)
-
-        concat = torch.cat([upscale, contr_2*concat_weight], 1)
-        expand = self.expand_2_2(self.expand_2_1(concat))
-        upscale = self.upscale2(expand)
-
-        concat = torch.cat([upscale, contr_1*concat_weight], 1)
-        expand = self.expand_1_2(self.expand_1_1(concat))
-        upscale = self.upscale1(expand)
-
-        output = self.final(upscale)
-
-        return output
 
 
 class PrecipitationUNet(pl.LightningModule):
@@ -128,14 +27,21 @@ class PrecipitationUNet(pl.LightningModule):
         weight_decay: float = 0.0,
         grid_lat: int = 19,
         grid_lon: int = 61,
-        n_features: int = 14,
+        n_features: int = 21,
+        dropout: float = 0.0,
         **kwargs
     ):
         super().__init__()
-        self.unet = UNet()
+        self.unet = UNet(in_channels=n_features, dropout=dropout)
         self.mae_metric = MeanAbsoluteError()
         self.rmse_metric = MeanSquaredError(squared=False)
         self.target_scaler = TargetLogScaler()
+        
+        self.transform = transforms.RandomApply(
+            torch.nn.ModuleList([
+                transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))
+            ]), p=0.5
+            )
 
         self.save_hyperparameters()
         
@@ -155,8 +61,10 @@ class PrecipitationUNet(pl.LightningModule):
     def training_step(
         self, batch: tuple[torch.FloatTensor, torch.FloatTensor], batch_idx: int
     ):
-
+        
         x, y = batch
+        x = self.transform(x)
+        
         b, c, h, w = x.size()
 
         y_hat = self.unet(x)
@@ -191,6 +99,9 @@ class PrecipitationUNet(pl.LightningModule):
         return y_hat_rescaled, y
     
     def validation_epoch_end(self, outputs) -> None:
+        # for param_group in self.trainer.optimizers[0].param_groups:
+        #     print(param_group["lr"])
+        
         if self.current_epoch == self.trainer.max_epochs -1:
             
             val_preds = torch.vstack([tup[0] for tup in outputs[0]]).cpu().numpy()
@@ -220,7 +131,9 @@ class PrecipitationUNet(pl.LightningModule):
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams_initial.learning_rate, weight_decay=self.hparams.weight_decay)  # type: ignore
-        return optimizer
+        lr_scheduler = CosineAnnealingLR(optimizer, T_max=self.trainer.max_epochs, eta_min=0.000001)
+        
+        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
 
 
 if __name__ == "__main__":
@@ -228,7 +141,7 @@ if __name__ == "__main__":
 
     # wandb.finish()
     # wandb_logger = WandbLogger(project="dummy-MLP", log_model="all", dir="logs")
-    tb_logger = TensorBoardLogger("new_logs", name="dummy-UNet")
+    tb_logger = TensorBoardLogger("latest_logs", name="dummy-UNet")
     
     pl.seed_everything(123)
     cli = LightningCLI(

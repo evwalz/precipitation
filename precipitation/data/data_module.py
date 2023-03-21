@@ -19,22 +19,22 @@ class PrecipitationDataPaths:
     #path_corr1_train = "corr_lag1_train.nc"
     #path_corr2_train = "corr_lag2_train.nc"
     #path_corr3_train = "corr_lag3_train.nc"
-    path_pw_train = "tcwv_2000_2018.nc"
-    path_cape_train = "cape_2000_2018.nc"
-    path_cc_train = "cloudcover_2000_2018.nc"
-    path_clwc_train = "cloudwater_2000_2018.nc"
-    path_rh5_train = "rh500_2000_2018.nc"
-    path_rh3_train = "rh300_update_2000_2018.nc"
-    path_d2m_train = "d2m_2000_2018.nc"
-    path_cin_train = "cin_2000_2018.nc"
-    path_vo7_train = "relvor700_2000_2018.nc"
-    path_sh600_train = "spec_humid600_2000_2018.nc"
-    path_sh925_train= "spec_humid925_2000_2018.nc"
-    path_temp_train = "t2m_2000_2018.nc"
-    path_kindx_train = "kindx_2000_2018.nc"
-    path_sh7_train = "spec_humid700_2000_2018.nc"
-    path_sp_train = "surfpressure_2000_2018.nc"
-    path_shear_train = "shear925_600_2000_2018.nc"
+    path_pw_train = "predictors/train/tcwv_2000_2018.nc"
+    path_cape_train = "predictors/train/cape_2000_2018.nc"
+    path_cc_train = "predictors/train/cloudcover_2000_2018.nc"
+    path_clwc_train = "predictors/train/cloudwater_2000_2018.nc"
+    path_rh5_train = "predictors/train/rh500_2000_2018.nc"
+    path_rh3_train = "predictors/train/rh300_update_2000_2018.nc"
+    path_d2m_train = "predictors/train/d2m_2000_2018.nc"
+    path_cin_train = "predictors/train/cin_2000_2018.nc"
+    path_vo7_train = "predictors/train/relvor700_2000_2018.nc"
+    path_sh600_train = "predictors/train/spec_humid600_2000_2018.nc"
+    path_sh925_train= "predictors/train/spec_humid925_2000_2018.nc"
+    path_temp_train = "predictors/train/t2m_2000_2018.nc"
+    path_kindx_train = "predictors/train/kindx_2000_2018.nc"
+    path_sh7_train = "predictors/train/spec_humid700_2000_2018.nc"
+    path_sp_train = "predictors/train/surfpressure_2000_2018.nc"
+    path_shear_train = "predictors/train/shear925_600_2000_2018.nc"
     # path_stream_train = "stream_2000_2018.nc"
     #path_geodiff_train = "geodiff_2000_2018.nc"
     #path_vertvelo_train = "vert_velocity_mean850_500_300_2000_2018.nc"
@@ -44,80 +44,26 @@ class PrecipitationDataPaths:
     #path_corr1_test = "corr_lag1_test.nc"
     #path_corr2_test = "corr_lag2_test.nc"
     #path_corr3_test = "corr_lag3_test.nc"
-    path_pw_test = "tcwv_2019.nc"
-    path_cape_test = "cape_2019.nc"
-    path_cc_test = "cloudcover_2019.nc"
-    path_clwc_test = "cloudwater_2019.nc"
-    path_rh5_test = "rh500_2019.nc"
-    path_rh3_test = "rh300_update_2019.nc"
-    path_d2m_test = "d2m_2019.nc"
-    path_cin_test = "cin_2019.nc"
-    path_vo7_test = "relvor700_2019.nc"
-    path_sh600_test = "spec_humid600_2019.nc"
-    path_sh925_test = "spec_humid925_2019.nc"
-    path_temp_test = "t2m_2019.nc"
-    path_kindx_test = "kindx_2019.nc"
-    path_sh7_test = "spec_humid700_2019.nc"
-    path_sp_test = "surfpressure_2019.nc"
-    path_shear_test = "shear925_600_2019.nc"
+    path_pw_test = "predictors/test/tcwv_2019.nc"
+    path_cape_test = "predictors/test/cape_2019.nc"
+    path_cc_test = "predictors/test/cloudcover_2019.nc"
+    path_clwc_test = "predictors/test/cloudwater_2019.nc"
+    path_rh5_test = "predictors/test/rh500_2019.nc"
+    path_rh3_test = "predictors/test/rh300_update_2019.nc"
+    path_d2m_test = "predictors/test/d2m_2019.nc"
+    path_cin_test = "predictors/test/cin_2019.nc"
+    path_vo7_test = "predictors/test/relvor700_2019.nc"
+    path_sh600_test = "predictors/test/spec_humid600_2019.nc"
+    path_sh925_test = "predictors/test/spec_humid925_2019.nc"
+    path_temp_test = "predictors/test/t2m_2019.nc"
+    path_kindx_test = "predictors/test/kindx_2019.nc"
+    path_sh7_test = "predictors/test/spec_humid700_2019.nc"
+    path_sp_test = "predictors/test/surfpressure_2019.nc"
+    path_shear_test = "predictors/test/shear925_600_2019.nc"
     # path_stream_test = "stream_2019.nc"
     #path_geodiff_test = "geodiff_2019.nc"
     #path_vertvelo_test = "vert_velocity_mean850_500_300_2019.nc"
     # path_vimd_test = "accum_vimd_2019.nc"
-
-    def subset_v1(self) -> tuple[list[str], list[str]]:
-        train = [
-            self.path_corr1_train,
-            self.path_corr2_train,
-            self.path_corr3_train,
-            self.path_pw_train,
-            self.path_cape_train,
-            self.path_cc_train,
-            self.path_clwc_train,
-            self.path_rh5_train, 
-            self.path_rh3_train,
-            self.path_d2m_train,
-            self.path_cin_train,
-            self.path_vo7_train,
-            self.path_sh600_train,
-            self.path_sh925_train,
-            self.path_temp_train,
-            self.path_kindx_train,
-            self.path_sh7_train,
-            self.path_sp_train,
-            self.path_shear_train,
-            #self.path_geodiff_train,
-            #self.path_vertvelo_train,
-            #self.path_vimd_train,
-            #self.path_stream_train,
-        ]
-        test = [
-            self.path_corr1_test,
-            self.path_corr2_test,
-            self.path_corr3_test,
-            self.path_pw_test,
-            self.path_cape_test,
-            self.path_cc_test,
-            self.path_clwc_test,
-            self.path_rh5_test, 
-            self.path_rh3_test,
-            self.path_d2m_test,
-            self.path_cin_test,
-            self.path_vo7_test,
-            self.path_sh600_test,
-            self.path_sh925_test,
-            self.path_temp_test,
-            self.path_kindx_test,
-            self.path_sh7_test,
-            self.path_sp_test,
-            self.path_shear_test,
-            #self.path_geodiff_test,
-            #self.path_vertvelo_test,
-            #self.path_vimd_test,
-            #self.path_stream_test,
-        ]
-
-        return train, test
 
 
 class PerFeatureMinMaxScaler:
@@ -318,19 +264,34 @@ class PrecipitationDataModule(LightningDataModule):
 
     def load_and_concat(
         self,
-        list_of_features: list[str] = ["kindx_2000_2017.nc"],
+        list_of_features: list[str] = ["kindx_2000_2018.nc"],
         add_time: bool = False,
-        folder_data: str = "train",
+        mode: str = "train",
     ) -> tuple[np.ndarray, np.ndarray]:
+        
+        with open(str(self.data_dir / 'split_train_folds.pickle'), 'rb') as f:
+            X = pickle.load(f)
+        timeseries_cv_split_manual = X[0:8]
+        self.cv_fold = timeseries_cv_split_manual[self.fold]
+        
         data_list = []
         for i, feature in enumerate(list_of_features):
+            if mode == "val" and "corr_predictors" in feature:
+                feature = feature.replace("train", "test")
             dataset = xr.open_dataset(
-                self.data_dir / "predictors" / folder_data / feature
+                self.data_dir / feature
             )
+            
             data_array = dataset[list(dataset.data_vars)[0]].values
 
-            if "corr_lag" in feature:
+            if "corr_predictors" in feature:
                 data_array = np.log(data_array + 0.001)
+                
+            else:
+                if mode == "train":
+                    data_array = data_array[self.cv_fold[0]]
+                elif mode == "val":
+                    data_array = data_array[self.cv_fold[1]]
 
             if add_time and i == 0:
                 days_oty = pd.date_range(start=dataset.time.values[0], end=dataset.time.values[-1], freq="D").dayofyear.to_numpy() - 1  # type: ignore
@@ -347,19 +308,24 @@ class PrecipitationDataModule(LightningDataModule):
             data_list.append(data_array)
 
         target_filename = (
-            "obs_precip_train.nc" if folder_data == "train" else "obs_precip_test.nc"
+            "obs_precip_train.nc" if mode in ["train", "val"] else "obs_precip_test.nc"
         )
         target = xr.open_dataset(self.data_dir / "observation" / target_filename)
+        target_array = target["precipitationCal"].values
+        if mode == "train":
+            target_array = target_array[self.cv_fold[0]]
+        elif mode == "val":
+            target_array = target_array[self.cv_fold[1]]
 
-        return np.stack(data_list, axis=1), target["precipitationCal"].values
+        return np.stack(data_list, axis=1), target_array
 
     def setup(self, stage: str | None = None) -> None:
-        self.data = PrecipitationDataPaths()
+        paths = PrecipitationDataPaths()
         if self.feature_set == "v1":
-            feature_set_train, feature_set_test = self.data.subset_v1()
+            feature_set_train, feature_set_test = self.subset_v1(paths)
             add_time = False
         elif self.feature_set == "v1+time":
-            feature_set_train, feature_set_test = self.data.subset_v1()
+            feature_set_train, feature_set_test = self.subset_v1(paths)
             add_time = True
         else:
             raise NotImplementedError(
@@ -368,31 +334,27 @@ class PrecipitationDataModule(LightningDataModule):
 
         if stage == "fit" or stage is None:
             data_array_train, target_array_train = self.load_and_concat(
-                feature_set_train, add_time=add_time, folder_data="train"
+                feature_set_train, add_time=add_time, mode="train"
             )
-            #timeseries_cv_splitter = TimeSeriesSplit(n_splits=7, test_size=365)
-            #self.cv_fold = list(timeseries_cv_splitter.split(data_array_train))[
-            #    self.fold
-            #]
-            with open('split_train_folds.pickle', 'rb') as f:
-                X = pickle.load(f)
-            timeseries_cv_split_manual = X[0:8]
-            self.cv_fold = timeseries_cv_split_manual[self.fold]
 
-            dataset = self.scaler_inputs.fit_transform(data_array_train)
-            target = self.scaler_target.fit_transform(target_array_train)
+            dataset_train = self.scaler_inputs.fit_transform(data_array_train)
+            target_train = self.scaler_target.fit_transform(target_array_train)
 
-            dataset = torch.from_numpy(dataset).float()
-            target = torch.from_numpy(target).float()
+            data_array_val, target_array_val = self.load_and_concat(
+                feature_set_train, add_time=add_time, mode="val"
+            )
+            
+            dataset_val = self.scaler_inputs.transform(data_array_val)
+            target_val = self.scaler_target.transform(target_array_val)
 
-            self.train_data = dataset[self.cv_fold[0]]
-            self.train_target = target[self.cv_fold[0]]
-            self.val_data = dataset[self.cv_fold[1]]
-            self.val_target = target[self.cv_fold[1]]
+            self.train_data = torch.from_numpy(dataset_train).float()
+            self.val_data = torch.from_numpy(dataset_val).float()
+            self.train_target = torch.from_numpy(target_train).float()
+            self.val_target = torch.from_numpy(target_val).float()
 
         if stage == "test" or stage is None:
             data_array_test, target_array_test = self.load_and_concat(
-                feature_set_test, add_time=add_time, folder_data="test"
+                feature_set_test, add_time=add_time, mode="test"
             )
 
             dataset_test = self.scaler_inputs.transform(data_array_test)
@@ -449,6 +411,60 @@ class PrecipitationDataModule(LightningDataModule):
         return DataLoader(
             dataset, batch_size=self.batch_size, shuffle=False, num_workers=0
         )
+        
+    def subset_v1(self, paths) -> tuple[list[str], list[str]]:
+        train = [
+            f"corr_predictors/predictor_train_{self.fold+10}_{self.fold+11}_1lag.nc",
+            f"corr_predictors/predictor_train_{self.fold+10}_{self.fold+11}_2lag.nc",
+            f"corr_predictors/predictor_train_{self.fold+10}_{self.fold+11}_3lag.nc",
+            paths.path_pw_train,
+            paths.path_cape_train,
+            paths.path_cc_train,
+            paths.path_clwc_train,
+            paths.path_rh5_train, 
+            paths.path_rh3_train,
+            paths.path_d2m_train,
+            paths.path_cin_train,
+            paths.path_vo7_train,
+            paths.path_sh600_train,
+            paths.path_sh925_train,
+            paths.path_temp_train,
+            paths.path_kindx_train,
+            paths.path_sh7_train,
+            paths.path_sp_train,
+            paths.path_shear_train,
+            #paths.path_geodiff_train,
+            #paths.path_vertvelo_train,
+            #paths.path_vimd_train,
+            #paths.path_stream_train,
+        ]
+        test = [
+            "corr_predictors/predictor_test_18_19_1lag.nc",
+            "corr_predictors/predictor_test_18_19_2lag.nc",
+            "corr_predictors/predictor_test_18_19_3lag.nc",
+            paths.path_pw_test,
+            paths.path_cape_test,
+            paths.path_cc_test,
+            paths.path_clwc_test,
+            paths.path_rh5_test, 
+            paths.path_rh3_test,
+            paths.path_d2m_test,
+            paths.path_cin_test,
+            paths.path_vo7_test,
+            paths.path_sh600_test,
+            paths.path_sh925_test,
+            paths.path_temp_test,
+            paths.path_kindx_test,
+            paths.path_sh7_test,
+            paths.path_sp_test,
+            paths.path_shear_test,
+            #paths.path_geodiff_test,
+            #paths.path_vertvelo_test,
+            #paths.path_vimd_test,
+            #paths.path_stream_test,
+        ]
+
+        return train, test
 
 
 if __name__ == "__main__":
