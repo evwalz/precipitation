@@ -250,6 +250,8 @@ class PrecipitationDataModule(LightningDataModule):
             raise NotImplementedError("Scaler {} is not implemented.".format(scaler))
         # self.scaler_target = TargetMaxScaler()
         self.scaler_target = NoScalerDummy()
+        
+        self.save_hyperparameters()
 
     @property
     def n_features(self) -> int:
