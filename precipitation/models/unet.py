@@ -131,9 +131,7 @@ class PrecipitationUNet(pl.LightningModule):
                     
     #         # masked_crps = crps_whole * self.mask.cpu().numpy()
     #         # mean_masked_crps = np.mean(masked_crps)
-            
-    #         crps_list = [crps for crps in crps_list if crps is not None]
-            
+                        
     #         mean_masked_crps = np.mean(crps_list)
 
     #         self.log_dict({"val_metrics/masked_crps": mean_masked_crps})
