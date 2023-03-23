@@ -278,7 +278,9 @@ class PrecipitationDataModule(LightningDataModule):
         data_list = []
         for i, feature in enumerate(list_of_features):
             if mode == "val" and "corr_predictors" in feature:
-                feature = feature.replace("train", "test")
+                feature = feature.replace("train", "test")  
+            #if mode == "val" and "upstream_predictors" in feature:
+            #   feature = feature.replace("train", "test")
             dataset = xr.open_dataset(
                 self.data_dir / feature
             )
@@ -438,6 +440,12 @@ class PrecipitationDataModule(LightningDataModule):
             #paths.path_vertvelo_train,
             #paths.path_vimd_train,
             #paths.path_stream_train,
+            #path_pressure_tendency_train,
+            #path_precip_lag1_train,
+            #path_precip_lag2_train,
+            #path_precip_lag3_train,
+            #f"upstream_predictors/geodiff/predictor_train_abs_{self.fold+10}_{self.fold+11}_0lag.nc",
+            #f"upstream_predictors/vvmean/predictor_train_abs_{self.fold+10}_{self.fold+11}_0lag.nc",
         ]
         test = [
             "corr_predictors/predictor_test_18_19_1lag.nc",
@@ -463,6 +471,12 @@ class PrecipitationDataModule(LightningDataModule):
             #paths.path_vertvelo_test,
             #paths.path_vimd_test,
             #paths.path_stream_test,
+            #path_pressure_tendency_test,
+            #path_precip_lag1_test,
+            #path_precip_lag2_test,
+            #path_precip_lag3_test,
+            #f"upstream_predictors/geodiff/predictor_test_abs_18_19_0lag.nc",
+            #f"upstream_predictors/vvmean/predictor_test_abs_18_19_0lag.nc",
         ]
 
         return train, test
