@@ -475,8 +475,8 @@ class PrecipitationDataModule(LightningDataModule):
             #paths.precip_lag1_test,
             #paths.precip_lag2_test,
             #paths.precip_lag3_test,
-            #f"upstream_predictors/geodiff/predictor_test_abs_18_19_0lag.nc",
-            #f"upstream_predictors/vvmean/predictor_test_abs_18_19_0lag.nc",
+            #"upstream_predictors/geodiff/predictor_test_abs_18_19_0lag.nc",
+            #"upstream_predictors/vvmean/predictor_test_abs_18_19_0lag.nc",
         ]
 
         return train, test
