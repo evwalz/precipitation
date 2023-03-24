@@ -3,67 +3,14 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 import torch
-from dataclasses import dataclass
 from sklearn.model_selection import TimeSeriesSplit
 from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.accelerators.cuda import CUDAAccelerator
 from pytorch_lightning.accelerators.mps import MPSAccelerator
+from precipitation.data.data_setup import PrecipitationDataPaths, select_data_subset
 import pickle
 
-@dataclass
-class PrecipitationDataPaths:
-    """Class to handle precipitation data."""
-
-    path_pw_train = "predictors/train/tcwv_2000_2018.nc"
-    path_cape_train = "predictors/train/cape_2000_2018.nc"
-    path_cc_train = "predictors/train/cloudcover_2000_2018.nc"
-    path_clwc_train = "predictors/train/cloudwater_2000_2018.nc"
-    path_rh5_train = "predictors/train/rh500_2000_2018.nc"
-    path_rh3_train = "predictors/train/rh300_update_2000_2018.nc"
-    path_d2m_train = "predictors/train/d2m_2000_2018.nc"
-    path_cin_train = "predictors/train/cin_2000_2018.nc"
-    path_vo7_train = "predictors/train/relvor700_2000_2018.nc"
-    path_sh600_train = "predictors/train/spec_humid600_2000_2018.nc"
-    path_sh925_train= "predictors/train/spec_humid925_2000_2018.nc"
-    path_temp_train = "predictors/train/t2m_2000_2018.nc"
-    path_kindx_train = "predictors/train/kindx_2000_2018.nc"
-    path_sh7_train = "predictors/train/spec_humid700_2000_2018.nc"
-    path_sp_train = "predictors/train/surfpressure_2000_2018.nc"
-    path_shear_train = "predictors/train/shear925_600_2000_2018.nc"
-    path_stream_train = "predictors/train/stream_2000_2018.nc"
-    path_geodiff_train = "predictors/train/geodiff_2000_2018.nc"
-    path_vertvelo_train = "predictors/train/vert_velocity_mean850_500_300_2000_2018.nc"
-    path_vimd_train = "predictors/train/accum_vimd_2000_2018.nc"
-    path_pressure_tendency_train = "predictors/train/pressure_tendency_2000_2018.nc"
-    path_precip_lag1_train = "predictors/train/precip_obs_lag_1_2000_2018.nc"
-    path_precip_lag2_train = "predictors/train/precip_obs_lag_2_2000_2018.nc"
-    path_precip_lag3_train = "predictors/train/precip_obs_lag_3_2000_2018.nc"
-
-    path_pw_test = "predictors/test/tcwv_2019.nc"
-    path_cape_test = "predictors/test/cape_2019.nc"
-    path_cc_test = "predictors/test/cloudcover_2019.nc"
-    path_clwc_test = "predictors/test/cloudwater_2019.nc"
-    path_rh5_test = "predictors/test/rh500_2019.nc"
-    path_rh3_test = "predictors/test/rh300_update_2019.nc"
-    path_d2m_test = "predictors/test/d2m_2019.nc"
-    path_cin_test = "predictors/test/cin_2019.nc"
-    path_vo7_test = "predictors/test/relvor700_2019.nc"
-    path_sh600_test = "predictors/test/spec_humid600_2019.nc"
-    path_sh925_test = "predictors/test/spec_humid925_2019.nc"
-    path_temp_test = "predictors/test/t2m_2019.nc"
-    path_kindx_test = "predictors/test/kindx_2019.nc"
-    path_sh7_test = "predictors/test/spec_humid700_2019.nc"
-    path_sp_test = "predictors/test/surfpressure_2019.nc"
-    path_shear_test = "predictors/test/shear925_600_2019.nc"
-    path_stream_test = "predictors/test/stream_2019.nc"
-    path_geodiff_test = "predictors/test/geodiff_2019.nc"
-    path_vertvelo_test = "predictors/test/vert_velocity_mean850_500_300_2019.nc"
-    path_vimd_test = "predictors/test/accum_vimd_2019.nc"
-    path_pressure_tendency_test = "predictors/test/pressure_tendency_2019.nc"
-    path_precip_lag1_test = "predictors/test/precip_obs_lag_1_2019.nc"
-    path_precip_lag2_test = "predictors/test/precip_obs_lag_2_2019.nc"
-    path_precip_lag3_test = "predictors/test/precip_obs_lag_3_2019.nc"
 
 class PerFeatureMinMaxScaler:
     def __init__(
@@ -280,10 +227,10 @@ class PrecipitationDataModule(LightningDataModule):
             
             data_array = dataset[list(dataset.data_vars)[0]].values
 
-            if "corr_predictors" in feature:
+            if "corr_predictors" in feature or "precip_obs_lag" in feature:
                 data_array = np.log(data_array + 0.001)
                 
-            else:
+            if not "corr_predictors" in feature and not "upstream_predictors" in feature:
                 if mode == "train":
                     data_array = data_array[self.cv_fold[0]]
                 elif mode == "val":
@@ -317,16 +264,11 @@ class PrecipitationDataModule(LightningDataModule):
 
     def setup(self, stage: str | None = None) -> None:
         paths = PrecipitationDataPaths()
-        if self.feature_set == "v1":
-            feature_set_train, feature_set_test = self.subset_v1(paths)
-            add_time = False
-        elif self.feature_set == "v1+time":
-            feature_set_train, feature_set_test = self.subset_v1(paths)
+        feature_set_train, feature_set_test = select_data_subset(paths=paths, version=self.feature_set, fold=self.fold)
+        if "time" in self.feature_set:
             add_time = True
         else:
-            raise NotImplementedError(
-                f"Feature set {self.feature_set} is not implemented."
-            )
+            add_time = False
 
         if stage == "fit" or stage is None:
             data_array_train, target_array_train = self.load_and_concat(
