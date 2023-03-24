@@ -226,7 +226,7 @@ class PrecipitationDataModule(LightningDataModule):
     def __init__(
         self,
         data_dir: str = "~/datasets/precipitation",
-        feature_set: str = "v1",
+        feature_set: str = "v1+time",
         batch_size: int = 32,
         fold: int = 0,
         scaler: str = "mean-std",
@@ -254,14 +254,7 @@ class PrecipitationDataModule(LightningDataModule):
 
     @property
     def n_features(self) -> int:
-        if self.feature_set == "v1":
-            return 21
-        elif self.feature_set == "v1+time":
-            return 23
-        else:
-            raise NotImplementedError(
-                "Feature set {} is not implemented.".format(self.feature_set)
-            )
+        return self.train_data.shape[1]
 
     def load_and_concat(
         self,
@@ -483,7 +476,7 @@ class PrecipitationDataModule(LightningDataModule):
 
 
 if __name__ == "__main__":
-    data = PrecipitationDataModule(feature_set="v1+time")
+    data = PrecipitationDataModule(feature_set="v1+time", data_dir="/home/gregor/datasets/precipitation", batch_size=32, fold=0)
     data.setup(stage="fit")
 
     train_loader = data.train_dataloader()

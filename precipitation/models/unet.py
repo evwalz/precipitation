@@ -35,7 +35,7 @@ class PrecipitationUNet(pl.LightningModule):
         **kwargs
     ):
         super().__init__()
-        self.unet = UNet(in_channels=n_features, initial_filter_size=initial_filter_size, dropout=dropout)
+        # self.unet = UNet(in_channels=n_features, initial_filter_size=initial_filter_size, dropout=dropout)
         self.mae_metric = MeanAbsoluteError()
         self.rmse_metric = MeanSquaredError(squared=False)
         self.target_scaler = TargetLogScaler()
@@ -60,6 +60,8 @@ class PrecipitationUNet(pl.LightningModule):
             self.mask = self.mask.to(torch.device("cuda"))
         if self.trainer and isinstance(self.trainer.accelerator, MPSAccelerator):
             self.mask = self.mask.to(torch.device("mps"))
+            
+        self.unet = UNet(in_channels=self.trainer.datamodule.n_features, initial_filter_size=self.hparams.initial_filter_size, dropout=self.hparams.dropout)
             
     def on_train_start(self) -> None:
         self.logger.log_hyperparams(self.hparams, {"val_metrics/mae": 0, "val_metrics/masked_mae": 0, "val_metrics/rmse": 0, "val_metrics/masked_crps": 0})
