@@ -1,12 +1,14 @@
-# EasyUQ
+# Data runs
 
-Code to replicate [ML experiment](https://github.com/evwalz/easyuq/tree/main/ML_example) and [WeatherBench experiment](https://github.com/evwalz/easyuq/tree/main/Weather_example) from EasyUQ paper and [simulation example](https://github.com/evwalz/easyuq/tree/main/Simulation_example) to show how EasyUQ and smooth EasyUQ are applied.
+1. Version: subset of variables 
+2. Version: include 2 upstream predictors (geodiff and vvmean)
+3. Version: include 3 more local predictors (vimd, stream and tendency)
 
-# Dependencies
+Conclusion: Does subset of variables (remove not so important features) improve performance? (i.e. cin, shear, tendency...)
 
-Implementation of IDR available here: https://github.com/evwalz/isodisreg
+4. Version: replace 2 last upstream predictors by local variables (geodiff, vvmean)
+5. Version: replace all upstream predictors by local variables (corr1, corr2, corr3, geodiff, vvmean)
+6. Version: completely remove corr1, corr2 and corr3
 
-CRPS functions available here: https://github.com/evwalz/crpsmixture
+Conclusion: Do we need "correlation" preprocessing in CNN context?. Do we need time lagging of precip at all? 
 
-# Reference
-Link to arXiv paper to be added
