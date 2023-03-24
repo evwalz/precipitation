@@ -36,9 +36,9 @@ class PrecipitationDataPaths:
     # path_vertvelo_train = "predictors/train/vert_velocity_mean850_500_300_2000_2018.nc"
     # path_vimd_train = "predictors/train/accum_vimd_2000_2018.nc"
     # path_pressure_tendency_train = "predictors/train/pressure_tendency_2000_2018.nc"
-    # path_precip_lag1_train = "predictors/train/precip_lag1_2000_2018.nc"
-    # path_precip_lag2_train = "predictors/train/precip_lag2_2000_2018.nc"
-    # path_precip_lag3_train = "predictors/train/precip_lag3_2000_2018.nc"
+    # path_precip_lag1_train = "predictors/train/precip_obs_lag_1_2000_2018.nc"
+    # path_precip_lag2_train = "predictors/train/precip_obs_lag_2_2000_2018.nc"
+    # path_precip_lag3_train = "predictors/train/precip_obs_lag_3_2000_2018.nc"
 
     path_pw_test = "predictors/test/tcwv_2019.nc"
     path_cape_test = "predictors/test/cape_2019.nc"
@@ -61,9 +61,9 @@ class PrecipitationDataPaths:
     # path_vertvelo_test = "predictors/test/vert_velocity_mean850_500_300_2019.nc"
     # path_vimd_test = "predictors/test/accum_vimd_2019.nc"
     # path_pressure_tendency_test = "predictors/test/pressure_tendency_2019.nc"
-    # path_precip_lag1_test = "predictors/test/precip_lag1_2019.nc"
-    # path_precip_lag2_test = "predictors/test/precip_lag2_2019.nc"
-    # path_precip_lag3_test = "predictors/test/precip_lag3_2019.nc"
+    # path_precip_lag1_test = "predictors/test/precip_obs_lag_1_2019.nc"
+    # path_precip_lag2_test = "predictors/test/precip_obs_lag_2_2019.nc"
+    # path_precip_lag3_test = "predictors/test/precip_obs_lag_3_2019.nc"
 
 class PerFeatureMinMaxScaler:
     def __init__(
