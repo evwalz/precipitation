@@ -279,8 +279,8 @@ class PrecipitationDataModule(LightningDataModule):
         for i, feature in enumerate(list_of_features):
             if mode == "val" and "corr_predictors" in feature:
                 feature = feature.replace("train", "test")  
-            #if mode == "val" and "upstream_predictors" in feature:
-            #   feature = feature.replace("train", "test")
+            if mode == "val" and "upstream_predictors" in feature:
+                feature = feature.replace("train", "test")
             dataset = xr.open_dataset(
                 self.data_dir / feature
             )
