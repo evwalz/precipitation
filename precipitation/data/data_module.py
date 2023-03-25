@@ -245,6 +245,15 @@ class PrecipitationDataModule(LightningDataModule):
                 time_encoding_1 = np.sin(2 * np.pi * days_oty / 365)
                 time_encoding_2 = np.cos(2 * np.pi * days_oty / 365)
 
+                if len(time_encoding_1 > len(data_array)):
+                    if mode == "train":
+                        cv_idx = 0
+                    else:
+                        cv_idx = 1
+                    
+                    time_encoding_1 = time_encoding_1[self.cv_fold[cv_idx]]
+                    time_encoding_2 = time_encoding_2[self.cv_fold[cv_idx]]
+
                 data_list.append(time_encoding_1)
                 data_list.append(time_encoding_2)
 
