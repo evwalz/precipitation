@@ -69,6 +69,8 @@ def select_data_subset(paths, version='v1', fold=0):
         return subset_v5(paths, fold)
     elif version in ["v6", "v6+time"]:
         return subset_v6(paths, fold)
+    elif version in ["v7", "v7+time"]:
+        return subset_v7(paths, fold)
 
 
 # Version 1: original subset
@@ -475,6 +477,73 @@ def subset_v6(paths, fold) -> tuple[list[str], list[str]]:
         # paths.precip_lag3_test,
         # "upstream_predictors/geodiff/predictor_test_abs_18_19_0lag.nc",
         # "upstream_predictors/vert_velocity/predictor_test_abs_18_19_0lag.nc",
+    ]
+
+    return train, test
+
+
+def subset_v7(paths, fold) -> tuple[list[str], list[str]]:
+    train = [
+        f"corr_predictors/predictor_train_{fold + 10}_{fold + 11}_1lag.nc",
+        f"corr_predictors/predictor_train_{fold + 10}_{fold + 11}_2lag.nc",
+        f"corr_predictors/predictor_train_{fold + 10}_{fold + 11}_3lag.nc",
+        paths.path_pw_train,
+        paths.path_cape_train,
+        paths.path_cc_train,
+        paths.path_clwc_train,
+        paths.path_rh5_train,
+        paths.path_rh3_train,
+        paths.path_d2m_train,
+        paths.path_cin_train,
+        paths.path_vo7_train,
+        paths.path_sh600_train,
+        paths.path_sh925_train,
+        paths.path_temp_train,
+        paths.path_kindx_train,
+        paths.path_sh7_train,
+        paths.path_sp_train,
+        paths.path_shear_train,
+        paths.path_geodiff_train,
+        paths.path_vertvelo_train,
+        # paths.path_vimd_train,
+        # paths.path_stream_train,
+        # paths.pressure_tendency_train,
+        # paths.precip_lag1_train,
+        # paths.precip_lag2_train,
+        # paths.precip_lag3_train,
+        #f"upstream_predictors/geodiff/predictor_train_abs_{self.fold+10}_{self.fold+11}_0lag.nc",
+        #f"upstream_predictors/vvmean/predictor_train_abs_{self.fold+10}_{self.fold+11}_0lag.nc",
+    ]
+    test = [
+        "corr_predictors/predictor_test_18_19_1lag.nc",
+        "corr_predictors/predictor_test_18_19_2lag.nc",
+        "corr_predictors/predictor_test_18_19_3lag.nc",
+        paths.path_pw_test,
+        paths.path_cape_test,
+        paths.path_cc_test,
+        paths.path_clwc_test,
+        paths.path_rh5_test,
+        paths.path_rh3_test,
+        paths.path_d2m_test,
+        paths.path_cin_test,
+        paths.path_vo7_test,
+        paths.path_sh600_test,
+        paths.path_sh925_test,
+        paths.path_temp_test,
+        paths.path_kindx_test,
+        paths.path_sh7_test,
+        paths.path_sp_test,
+        paths.path_shear_test,
+        paths.path_geodiff_test,
+        paths.path_vertvelo_test,
+        # paths.path_vimd_test,
+        # paths.path_stream_test,
+        # paths.pressure_tendency_test,
+        # paths.precip_lag1_test,
+        # paths.precip_lag2_test,
+        # paths.precip_lag3_test,
+        #"upstream_predictors/geodiff/predictor_test_abs_18_19_0lag.nc",
+        #"upstream_predictors/vvmean/predictor_test_abs_18_19_0lag.nc",
     ]
 
     return train, test
