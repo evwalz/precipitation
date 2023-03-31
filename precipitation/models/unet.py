@@ -20,12 +20,12 @@ class PrecipitationUNet(L.LightningModule):
     def __init__(
         self,
         learning_rate: float = 0.01,
-        weight_decay: float = 0.0,
+        weight_decay: float = 1.e-8,
         grid_lat: int = 19,
         grid_lon: int = 61,
         n_features: int = 21,
         initial_filter_size: int = 64,
-        dropout: float = 0.0,
+        dropout: float = 0.2,
         **kwargs
     ):
         super().__init__()
