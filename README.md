@@ -49,6 +49,10 @@ Now we can pip install the remainind dependencies from the requirements.txt:
 ```
 pip install -r requirements.txt
 ```
+Another dependency, not taken care of yet, is `jsonargparse[signatures]`, let's install it:
+```
+pip install -U "jsonargparse[signatures]>=4.17.0"
+```
 
 Now we need Eva's isodisreg package. Go some point where you want to clone that other repo, and clone + install:
 ```
