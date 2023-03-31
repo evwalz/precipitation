@@ -1,28 +1,22 @@
-import argparse
 import torch
-from torch import nn
 from torch.nn import functional as F
-import xarray as xr
 import numpy as np
 from tqdm import tqdm
-import pandas as pd
 import multiprocessing
-from precipitation.models.unet_architectures import UNet
-from isodisreg import idr
 from torchvision import transforms
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
-from pytorch_lightning.accelerators.cuda import CUDAAccelerator
-from pytorch_lightning.accelerators.mps import MPSAccelerator
-import pytorch_lightning as pl
-from pytorch_lightning.loggers.wandb import WandbLogger
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.cli import LightningCLI
+import lightning as L
+from lightning.pytorch.accelerators import CUDAAccelerator, MPSAccelerator
+from lightning.pytorch.cli import LightningCLI
 from torch.optim.lr_scheduler import CosineAnnealingLR
+
+from isodisreg import idr
 from precipitation.data.data_module import PrecipitationDataModule, TargetLogScaler
 from precipitation.evaluation.calculate_crps import calculate_crps_idr
+from precipitation.models.unet_architectures import UNet
 
 
-class PrecipitationUNet(pl.LightningModule):
+class PrecipitationUNet(L.LightningModule):
     def __init__(
         self,
         learning_rate: float = 0.01,
@@ -117,37 +111,6 @@ class PrecipitationUNet(pl.LightningModule):
             self.log_dict({"loss/val_loss": loss, "val_metrics/mae": mae, "val_metrics/masked_mae": masked_mae, "val_metrics/rmse": rmse}, on_step=False, on_epoch=True)
                     
         return loss
-    
-    # def validation_epoch_end(self, outputs) -> None:
-    #     # for param_group in self.trainer.optimizers[0].param_groups:
-    #     #     print(param_group["lr"])
-        
-    #     if self.current_epoch == self.trainer.max_epochs -1:
-            
-    #         val_preds = torch.vstack([tup[0] for tup in outputs[0]]).cpu().numpy()
-    #         val_target = torch.vstack([tup[1] for tup in outputs[0]]).cpu().numpy()
-            
-    #         train_preds = torch.vstack([tup[0] for tup in outputs[1]]).cpu().numpy()
-    #         train_target = torch.vstack([tup[1] for tup in outputs[1]]).cpu().numpy()
-            
-    #         # crps_whole = np.zeros((self.hparams.grid_lat, self.hparams.grid_lon))
-    #         crps_list = []
-            
-    #         for i in tqdm(range(self.hparams.grid_lat)):
-    #             for j in tqdm(range(self.hparams.grid_lon)):
-    #                 if self.mask[i,j]:
-    #                     idr_per_grid = idr(y=train_target[:,i,j], X=pd.DataFrame(train_preds[:,i,j]))
-    #                     val_dist_pred = idr_per_grid.predict(pd.DataFrame(val_preds[:,i,j]))
-    #                     crps_per_grid = np.mean(val_dist_pred.crps(val_target[:,i,j])) # if seasonal validation, watch out here
-    #                     # crps_whole[i,j] = crps_per_grid
-    #                     crps_list.append(crps_per_grid)
-                    
-    #         # masked_crps = crps_whole * self.mask.cpu().numpy()
-    #         # mean_masked_crps = np.mean(masked_crps)
-                        
-    #         mean_masked_crps = np.mean(crps_list)
-
-    #         self.log_dict({"val_metrics/masked_crps": mean_masked_crps})
             
     def on_validation_epoch_end(self) -> None:
         # for param_group in self.trainer.optimizers[0].param_groups:
@@ -193,7 +156,7 @@ class PrecipitationUNet(pl.LightningModule):
 
             self.log_dict({"val_metrics/masked_crps": mean_masked_crps})
 
-    def configure_optimizers(self) -> torch.optim.Optimizer:
+    def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams_initial.learning_rate, weight_decay=self.hparams.weight_decay)  # type: ignore
         lr_scheduler = CosineAnnealingLR(optimizer, T_max=self.trainer.max_epochs, eta_min=0.000001)
         
@@ -209,7 +172,7 @@ if __name__ == "__main__":
     # wandb_logger = WandbLogger(name='U-Net LR Schedule - Medium', project="PrecipitationUNet", log_model="all", dir="logs")
     # tb_logger = TensorBoardLogger("/home/gregor/precipitation/eva_precipitation/testlogs", name="UNet-small", version="fold0", default_hp_metric=False)
     
-    pl.seed_everything(123)
+    L.seed_everything(123)
     cli = LightningCLI(
         model_class=PrecipitationUNet,
         datamodule_class=PrecipitationDataModule,
