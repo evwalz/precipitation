@@ -45,6 +45,10 @@ class PrecipitationUNet(pl.LightningModule):
                 transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))
             ]), p=0.5
             )
+        self.training_step_preds = []
+        self.training_step_targets = []
+        self.validation_step_preds = []
+        self.validation_step_targets = []
 
         self.save_hyperparameters()
         
@@ -85,7 +89,7 @@ class PrecipitationUNet(pl.LightningModule):
 
     def validation_step(
         self, batch: tuple[torch.FloatTensor, torch.FloatTensor], batch_idx: int, dataloader_idx: int = 0
-    ) -> None:
+    ) -> torch.Tensor:
         
         x, y = batch
         b, c, h, w = x.size()
@@ -98,6 +102,13 @@ class PrecipitationUNet(pl.LightningModule):
         y_hat_rescaled = self.target_scaler.inverse_transform(y_hat)
         
         if dataloader_idx == 0:
+            self.validation_step_preds.append(y_hat_rescaled)
+            self.validation_step_targets.append(y)
+        else:
+            self.training_step_preds.append(y_hat_rescaled)
+            self.training_step_targets.append(y)
+            
+        if dataloader_idx == 0:
             mae = self.mae_metric(y_hat_rescaled, y)
             masked_mae = self.mae_metric(y_hat_rescaled*self.mask, y*self.mask)
             rmse = self.rmse_metric(y_hat_rescaled, y)
@@ -105,7 +116,7 @@ class PrecipitationUNet(pl.LightningModule):
             # self.log_dict({"val_loss": loss, "val_mae": mae, "val_masked_mae": masked_mae, "val_rmse": rmse}, on_step=False, on_epoch=True)
             self.log_dict({"loss/val_loss": loss, "val_metrics/mae": mae, "val_metrics/masked_mae": masked_mae, "val_metrics/rmse": rmse}, on_step=False, on_epoch=True)
                     
-        return y_hat_rescaled, y
+        return loss
     
     # def validation_epoch_end(self, outputs) -> None:
     #     # for param_group in self.trainer.optimizers[0].param_groups:
@@ -138,7 +149,7 @@ class PrecipitationUNet(pl.LightningModule):
 
     #         self.log_dict({"val_metrics/masked_crps": mean_masked_crps})
             
-    def validation_epoch_end(self, outputs) -> None:
+    def on_validation_epoch_end(self) -> None:
         # for param_group in self.trainer.optimizers[0].param_groups:
         #     print(param_group["lr"])
         
@@ -146,11 +157,11 @@ class PrecipitationUNet(pl.LightningModule):
             
             mask = self.mask.cpu().numpy()
             
-            val_preds = torch.vstack([tup[0] for tup in outputs[0]]).cpu().numpy()
-            val_target = torch.vstack([tup[1] for tup in outputs[0]]).cpu().numpy()
+            val_preds = torch.vstack(self.validation_step_preds).cpu().numpy()
+            val_targets = torch.vstack(self.validation_step_targets).cpu().numpy()
             
-            train_preds = torch.vstack([tup[0] for tup in outputs[1]]).cpu().numpy()
-            train_target = torch.vstack([tup[1] for tup in outputs[1]]).cpu().numpy()
+            train_preds = torch.vstack(self.training_step_preds).cpu().numpy()
+            train_targets = torch.vstack(self.training_step_targets).cpu().numpy()
             
             # crps_whole = np.zeros((self.hparams.grid_lat, self.hparams.grid_lon))
             
@@ -159,7 +170,7 @@ class PrecipitationUNet(pl.LightningModule):
             pool = ctx.Pool(processes=num_processes)
             # pool = multiprocessing.Pool(processes=num_processes)
             
-            args_list = [(val_preds, val_target, train_preds, train_target, mask, i, j) for i in range(self.hparams.grid_lat) for j in range(self.hparams.grid_lon)]
+            args_list = [(val_preds, val_targets, train_preds, train_targets, mask, i, j) for i in range(self.hparams.grid_lat) for j in range(self.hparams.grid_lon)]
             
             pbar = tqdm(total=len(args_list))
             def update_pbar(*a):
@@ -200,7 +211,7 @@ if __name__ == "__main__":
     
     pl.seed_everything(123)
     cli = LightningCLI(
-        PrecipitationUNet,
+        model_class=PrecipitationUNet,
         datamodule_class=PrecipitationDataModule,
         trainer_defaults={
             "accelerator": "auto",
@@ -208,6 +219,6 @@ if __name__ == "__main__":
             "max_epochs": 5,
             # "logger": tb_logger,
         },
-        save_config_overwrite=True,
+        save_config_kwargs={"overwrite": True}
     )
     # wandb.finish()
