@@ -50,6 +50,18 @@ Now we can pip install the remainind dependencies from the requirements.txt:
 pip install -r requirements.txt
 ```
 
+Now we need Eva's isodisreg package. Go some point where you want to clone that other repo, and clone + install:
+```
+cd ~/precipitation/repos
+git clone https://github.com/evwalz/isodisreg.git
+cd isodisreg
+pip install -r requirements.txt
+pip install -e .
 ```
 
+Finally, let's install what we're after (we already installed the requirements above):
+```
+cd ~/precipitation/repos/
+git clone https://github.com/evwalz/precipitation.git
+pip install -e .
 ```
