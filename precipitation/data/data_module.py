@@ -5,9 +5,9 @@ import pandas as pd
 import torch
 from sklearn.model_selection import TimeSeriesSplit
 from torch.utils.data import TensorDataset, DataLoader
-from pytorch_lightning import LightningDataModule
-from pytorch_lightning.accelerators.cuda import CUDAAccelerator
-from pytorch_lightning.accelerators.mps import MPSAccelerator
+from lightning.pytorch import LightningDataModule
+from lightning.pytorch.accelerators import CUDAAccelerator, MPSAccelerator
+
 from precipitation.data.data_setup import PrecipitationDataPaths, select_data_subset
 import pickle
 

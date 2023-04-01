@@ -168,20 +168,35 @@ if __name__ == "__main__":
     # parser.add_argument('-f','--fold', help='Fold for tensorboard logging version', type=int, default=0, required=False)
     # args = vars(parser.parse_args())
     
+    from lightning.pytorch.loggers import TensorBoardLogger
+    
+    log_tb = TensorBoardLogger(save_dir="/home/gregor/precipitation/eva_precipitation/tests", name="UNet-64-0.2-test", version="fold0", default_hp_metric=False)
+    
     # import wandb
     # wandb_logger = WandbLogger(name='U-Net LR Schedule - Medium', project="PrecipitationUNet", log_model="all", dir="logs")
     # tb_logger = TensorBoardLogger("/home/gregor/precipitation/eva_precipitation/testlogs", name="UNet-small", version="fold0", default_hp_metric=False)
     
     L.seed_everything(123)
-    cli = LightningCLI(
-        model_class=PrecipitationUNet,
-        datamodule_class=PrecipitationDataModule,
-        trainer_defaults={
-            "accelerator": "auto",
-            "devices": 1,
-            "max_epochs": 5,
-            # "logger": tb_logger,
-        },
-        save_config_kwargs={"overwrite": True}
-    )
+    
+    m = PrecipitationUNet() # defaults match launch json
+    comp_m = torch.compile(m, mode="default")
+    
+    trainer = L.Trainer(max_epochs=20, logger=log_tb, accelerator="gpu", devices=[1], benchmark=True, log_every_n_steps=50, num_sanity_val_steps=-1)
+    
+    data_module = PrecipitationDataModule(feature_set="v7_nocorr+time", fold=0, data_dir="/home/gregor/datasets/precipitation")
+    
+    trainer.fit(model=comp_m, datamodule=data_module)
+    
+    
+    # cli = LightningCLI(
+    #     model_class=torch.compile(PrecipitationUNet),
+    #     datamodule_class=PrecipitationDataModule,
+    #     trainer_defaults={
+    #         "accelerator": "auto",
+    #         "devices": 1,
+    #         "max_epochs": 5,
+    #         # "logger": tb_logger,
+    #     },
+    #     save_config_kwargs={"overwrite": True}
+    # )
     # wandb.finish()
