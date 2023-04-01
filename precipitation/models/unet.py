@@ -126,6 +126,11 @@ class PrecipitationUNet(L.LightningModule):
             train_preds = torch.vstack(self.training_step_preds).cpu().numpy()
             train_targets = torch.vstack(self.training_step_targets).cpu().numpy()
             
+            self.validation_step_preds.clear()
+            self.validation_step_targets.clear()
+            self.training_step_preds.clear()
+            self.training_step_targets.clear()
+            
             # crps_whole = np.zeros((self.hparams.grid_lat, self.hparams.grid_lon))
             
             num_processes = multiprocessing.cpu_count()
