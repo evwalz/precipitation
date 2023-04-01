@@ -2,6 +2,7 @@
 Forecasting precipitation, 1 day at a time.
 
 ## Next Steps
+* Check why with 2.0 the multiprocessing eval takes so much longer
 * Validate 2.0 and across folds for 1-2 configs previously used.
 * Benchmark `torch.compile()` (on that note, we never used benchmark=True) -> why not both
 
