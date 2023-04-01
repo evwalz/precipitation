@@ -133,9 +133,14 @@ class PrecipitationUNet(L.LightningModule):
             
             # crps_whole = np.zeros((self.hparams.grid_lat, self.hparams.grid_lon))
             
-            num_processes = multiprocessing.cpu_count()
-            ctx = multiprocessing.get_context('spawn')
+            num_processes = torch.multiprocessing.cpu_count()
+            ctx = torch.multiprocessing.get_context('spawn')
             pool = ctx.Pool(processes=num_processes)
+            
+            # num_processes = multiprocessing.cpu_count()
+            # ctx = multiprocessing.get_context('spawn')
+            # pool = ctx.Pool(processes=num_processes)
+            
             # pool = multiprocessing.Pool(processes=num_processes)
             
             args_list = [(val_preds, val_targets, train_preds, train_targets, mask, i, j) for i in range(self.hparams.grid_lat) for j in range(self.hparams.grid_lon)]
