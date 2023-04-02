@@ -2,6 +2,11 @@
 Forecasting precipitation, 1 day at a time.
 
 ## Next Steps
+* Regularization techniques worth checking out (see https://arxiv.org/pdf/2201.03545.pdf section 3.1 training on ImageNet-1K): (compare: https://github.com/pytorch/vision/blob/main/torchvision/models/convnext.py#L38-L66)
+  * Stochastic Depth (used in ConvNeXt): https://arxiv.org/abs/1603.09382
+  * Label smoothing (used in ConvNeXt): https://arxiv.org/abs/1512.00567
+  * Layer scale (might be helpful in general, esp. when using transformers): https://arxiv.org/abs/2103.17239 - typically start with small value, allows for skips to carry more weight at the start
+  * EMA of weights (also apparently helps vs. overfitting, esp. for larger models)
 * Check why with 2.0 the multiprocessing eval takes so much longer [x]
   * setting `export OMP_NUM_THREADS=1`  at least made it perform in a stable fashion again (still slower than in before 2.0 upgrade though)
   * turns out there was a bug with the accumulation of preds/targets before eval, such that all epochs were stored, leading to much larger arrays evaluated in parallel when running full training, therefore memory bound -> fixed [x]
