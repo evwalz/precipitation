@@ -13,7 +13,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from isodisreg import idr
 from precipitation.data.data_module import PrecipitationDataModule, TargetLogScaler
 from precipitation.evaluation.calculate_crps import calculate_crps_idr
-from precipitation.models.unet_architectures import UNet
+from precipitation.models.architectures.unet_skips import UNet
 
 
 class PrecipitationUNet(L.LightningModule):
