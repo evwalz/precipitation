@@ -1,5 +1,6 @@
 #!/bin/sh
 # Run script for multiple runs
+export OMP_NUM_THREADS=1  # after upgrading to PyTorch 2.0 this apparently is important once again - might also be due to numpy going nuts with threading
 
 # source /home/$USER/.bashrc
 # precip
