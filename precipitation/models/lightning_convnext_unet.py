@@ -58,7 +58,8 @@ class PrecipitationUNet(L.LightningModule):
         if self.trainer and isinstance(self.trainer.accelerator, MPSAccelerator):
             self.mask = self.mask.to(torch.device("mps"))
             
-        self.unet = PrecipitationUnetConvNextBlock(dim=self.hparams.initial_filter_size, out_dim=1, channels=self.trainer.datamodule.n_features, with_time_emb=False, output_mean_scale=True,)#dropout=self.hparams.dropout)
+        self.unet = PrecipitationUnetConvNextBlock(dim=self.hparams.initial_filter_size, out_dim=1, channels=self.trainer.datamodule.n_features,
+                                                   with_time_emb=False, output_mean_scale=True, dropout=self.hparams.dropout)
             
     def on_train_start(self) -> None:
         self.logger.log_hyperparams(self.hparams, {"val_metrics/mae": 0, "val_metrics/masked_mae": 0, "val_metrics/rmse": 0, "val_metrics/masked_crps": 0})

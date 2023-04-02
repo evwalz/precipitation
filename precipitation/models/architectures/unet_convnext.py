@@ -61,9 +61,16 @@ class PreNorm(nn.Module):
 
 # building block modules
 class ConvNextBlock(nn.Module):
-    """ https://arxiv.org/abs/2201.03545 """
+    """
+    https://arxiv.org/abs/2201.03545
+    
+    This implementation is not yet exactly the same as the paper, but it is close.
+    TODO: add missing features: layer scale, stochastic depth, etc.
+    
+    see: https://github.com/pytorch/vision/blob/main/torchvision/models/convnext.py#L38-L66
+    """
 
-    def __init__(self, dim, dim_out, *, time_emb_dim = None, mult = 2, norm = True):
+    def __init__(self, dim, dim_out, *, time_emb_dim = None, mult = 2, norm = True, dropout = 0.):
         super().__init__()
         self.mlp = nn.Sequential(
             nn.GELU(),
@@ -73,13 +80,15 @@ class ConvNextBlock(nn.Module):
         self.ds_conv = nn.Conv2d(dim, dim, 7, padding = 3, groups = dim)
 
         self.net = nn.Sequential(
+            nn.Dropout2d(dropout, inplace=True),
             LayerNorm(dim) if norm else nn.Identity(),
-            nn.Conv2d(dim, dim_out * mult, 3, padding = 1),
+            nn.Conv2d(dim, dim_out * mult, 3, padding = 1),  # TODO: in the paper, these are 1x1 convs, change?
+            nn.Dropout2d(dropout, inplace=True),
             nn.GELU(),
             nn.Conv2d(dim_out * mult, dim_out, 3, padding = 1)
         )
 
-        self.res_conv = nn.Conv2d(dim, dim_out, 1) if dim != dim_out else nn.Identity()
+        self.res_conv = nn.Sequential(nn.Conv2d(dim, dim_out, 1), nn.Dropout2d(dropout, inplace=True)) if dim != dim_out else nn.Identity()
 
     def forward(self, x, time_emb = None):
         h = self.ds_conv(x)
@@ -232,6 +241,7 @@ class PrecipitationUnetConvNextBlock(nn.Module):
         out_dim = None,
         dim_mults=(1, 2, 4, 8),
         channels = 21,
+        dropout = 0.2,
         with_time_emb = False,
         output_mean_scale = False,
         residual = False
@@ -266,30 +276,30 @@ class PrecipitationUnetConvNextBlock(nn.Module):
             is_last = ind >= (num_resolutions - 1)
 
             self.downs.append(nn.ModuleList([
-                ConvNextBlock(dim_in, dim_out, time_emb_dim = time_dim, norm = ind != 0),
-                ConvNextBlock(dim_out, dim_out, time_emb_dim = time_dim),
+                ConvNextBlock(dim_in, dim_out, time_emb_dim = time_dim, norm = ind != 0, dropout=dropout),
+                ConvNextBlock(dim_out, dim_out, time_emb_dim = time_dim, dropout=dropout),
                 Residual(PreNorm(dim_out, LinearAttention(dim_out))),
                 Downsample(dim_out) if not is_last else nn.Identity()
             ]))
 
         mid_dim = dims[-1]
-        self.mid_block1 = ConvNextBlock(mid_dim, mid_dim, time_emb_dim = time_dim)
+        self.mid_block1 = ConvNextBlock(mid_dim, mid_dim, time_emb_dim = time_dim, dropout=dropout)
         self.mid_attn = Residual(PreNorm(mid_dim, LinearAttention(mid_dim)))
-        self.mid_block2 = ConvNextBlock(mid_dim, mid_dim, time_emb_dim = time_dim)
+        self.mid_block2 = ConvNextBlock(mid_dim, mid_dim, time_emb_dim = time_dim, dropout=dropout)
 
         for ind, (dim_in, dim_out) in enumerate(reversed(in_out[1:])):
             is_last = ind >= (num_resolutions - 1)
 
             self.ups.append(nn.ModuleList([
-                ConvNextBlock(dim_out * 2, dim_in, time_emb_dim = time_dim),
-                ConvNextBlock(dim_in, dim_in, time_emb_dim = time_dim),
+                ConvNextBlock(dim_out * 2, dim_in, time_emb_dim = time_dim, dropout=dropout),
+                ConvNextBlock(dim_in, dim_in, time_emb_dim = time_dim, dropout=dropout),
                 Residual(PreNorm(dim_in, LinearAttention(dim_in))),
                 Upsample(dim_in, output_padding=upsampling_output_paddings[ind]) if not is_last else nn.Identity()
             ]))
 
         out_dim = default(out_dim, channels)
         self.final_conv = nn.Sequential(
-            ConvNextBlock(dim, dim),
+            ConvNextBlock(dim, dim, dropout=dropout),
             nn.Conv2d(dim, out_dim, 1),
             #nn.Tanh() # ADDED
         )
