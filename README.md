@@ -26,6 +26,7 @@ pip install lightning
 ```
 Apparently, pytorch lightning now checks if torch is present (even from conda installs), and doesn't try to reinstall pytorch. Great! Afaik, this used to be the case before.
 
+OPTIONAL (required for map visualization in notebooks):
 Since cartopy (used in this project) requires GEOS, Shapely and pyshp - let's also conda install this:
 ```
 conda install -c conda-forge cartopy
