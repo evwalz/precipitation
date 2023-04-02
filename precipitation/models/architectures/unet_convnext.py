@@ -337,3 +337,4 @@ if __name__ == "__main__":
     inps = torch.randn((32, 21, 19, 61))
     
     out = unet(inps)
+    assert out.shape == (32, 1, 19, 61)
