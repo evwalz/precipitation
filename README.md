@@ -2,9 +2,12 @@
 Forecasting precipitation, 1 day at a time.
 
 ## Next Steps
-* Check why with 2.0 the multiprocessing eval takes so much longer
-* Validate 2.0 and across folds for 1-2 configs previously used.
-* Benchmark `torch.compile()` (on that note, we never used benchmark=True) -> why not both
+* Check why with 2.0 the multiprocessing eval takes so much longer [x]
+  * setting `export OMP_NUM_THREADS=1`  at least made it perform in a stable fashion again (still slower than in before 2.0 upgrade though)
+  * might be worth comparing numpy versions between envs [ ]
+* Validate 2.0 and across folds for 1-2 configs previously used. [ ]
+* Benchmark `torch.compile()` (on that note, we never used benchmark=True) -> why not both [x]
+  * didn't see speed-ups from compile, maybe redo after the num threads fix [ ]
 
 ## Step-by-Step Install
 
