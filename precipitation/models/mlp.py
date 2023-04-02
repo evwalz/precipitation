@@ -18,6 +18,9 @@ from precipitation.data.data_module import PrecipitationDataModule, TargetLogSca
 
 
 class PrecipitationMLP(pl.LightningModule):
+    """
+    TODO: UPDATE to PyTorch and Lightning 2.0
+    """
     def __init__(
         self,
         learning_rate: float = 0.01,
