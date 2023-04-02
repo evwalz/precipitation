@@ -95,12 +95,14 @@ class PrecipitationUNet(L.LightningModule):
         loss = F.mse_loss(y_hat, y_scaled)  # type: ignore
         y_hat_rescaled = self.target_scaler.inverse_transform(y_hat)
         
-        if dataloader_idx == 0:
-            self.validation_step_preds.append(y_hat_rescaled)
-            self.validation_step_targets.append(y)
-        else:
-            self.training_step_preds.append(y_hat_rescaled)
-            self.training_step_targets.append(y)
+        
+        if self.current_epoch == self.trainer.max_epochs - 1:
+            if dataloader_idx == 0:
+                self.validation_step_preds.append(y_hat_rescaled)
+                self.validation_step_targets.append(y)
+            else:
+                self.training_step_preds.append(y_hat_rescaled)
+                self.training_step_targets.append(y)
             
         if dataloader_idx == 0:
             mae = self.mae_metric(y_hat_rescaled, y)
