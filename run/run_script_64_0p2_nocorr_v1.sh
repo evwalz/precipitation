@@ -1,6 +1,6 @@
 #!/bin/sh
 # Run script for multiple runs
-export OMP_NUM_THREADS=1  # after upgrading to PyTorch 2.0 this apparently is important once again - might also be due to numpy going nuts with threading
+# export OMP_NUM_THREADS=1
 
 # nocorr
 python /home/gregor/precipitation/eva_precipitation/precipitation/precipitation/models/unet.py fit --model.learning_rate 0.01 --model.initial_filter_size 64 --model.weight_decay 1.e-8 --model.dropout 0.2 \
