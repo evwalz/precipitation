@@ -7,6 +7,13 @@ Forecasting precipitation, 1 day at a time.
   * Label smoothing (used in ConvNeXt): https://arxiv.org/abs/1512.00567
   * Layer scale (might be helpful in general, esp. when using transformers): https://arxiv.org/abs/2103.17239 - typically start with small value, allows for skips to carry more weight at the start
   * EMA of weights (also apparently helps vs. overfitting, esp. for larger models)
+
+* Optimization techniques for potential speedups (https://huggingface.co/docs/diffusers/main/en/optimization/fp16):
+  * cuDNN auto-tuner
+  * autocast (fp16)
+  * manual fp16
+  * channels last
+  * "traced" UNet
 * Check why with 2.0 the multiprocessing eval takes so much longer [x]
   * setting `export OMP_NUM_THREADS=1`  at least made it perform in a stable fashion again (still slower than in before 2.0 upgrade though)
   * turns out there was a bug with the accumulation of preds/targets before eval, such that all epochs were stored, leading to much larger arrays evaluated in parallel when running full training, therefore memory bound -> fixed [x]
