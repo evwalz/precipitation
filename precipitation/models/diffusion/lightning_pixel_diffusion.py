@@ -69,20 +69,33 @@ class PixelDiffusion(L.LightningModule):
         return  torch.optim.AdamW(list(filter(lambda p: p.requires_grad, self.model.parameters())), lr=self.lr)
 
 
-class PixelDiffusionConditional(PixelDiffusion):
+class PixelDiffusionConditional(L.LightningModule):
     def __init__(self,
                  train_dataset,
                  valid_dataset=None,
+                 num_timesteps=1000,
                  condition_channels=3,
                  batch_size=1,
                  lr=1e-3):
-        L.LightningModule.__init__(self)
+        super().__init__()
         self.train_dataset = train_dataset
         self.valid_dataset = valid_dataset
         self.lr = lr
         self.batch_size=batch_size
         
-        self.model=DenoisingDiffusionConditionalProcess(condition_channels=condition_channels)
+        self.model=DenoisingDiffusionConditionalProcess(condition_channels=condition_channels, num_timesteps=num_timesteps)
+        
+    @torch.no_grad()
+    def forward(self,*args,**kwargs):
+        return self.output_T(self.model(*args,**kwargs))
+    
+    def input_T(self, input):
+        # By default, let the model accept samples in [0,1] range, and transform them automatically
+        return (input.clip(0,1).mul_(2)).sub_(1)
+    
+    def output_T(self, input):
+        # Inverse transform of model output from [-1,1] to [0,1] range
+        return (input.add_(1)).div_(2)
     
     def training_step(self, batch, batch_idx):   
         input,output=batch
@@ -99,3 +112,21 @@ class PixelDiffusionConditional(PixelDiffusion):
         self.log('val_loss',loss)
         
         return loss
+    
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset,
+                          batch_size=self.batch_size,
+                          shuffle=True,
+                          num_workers=4)
+    
+    def val_dataloader(self):
+        if self.valid_dataset is not None:
+            return DataLoader(self.valid_dataset,
+                              batch_size=self.batch_size,
+                              shuffle=False,
+                              num_workers=4)
+        else:
+            return None
+    
+    def configure_optimizers(self):
+        return  torch.optim.AdamW(list(filter(lambda p: p.requires_grad, self.model.parameters())), lr=self.lr)
