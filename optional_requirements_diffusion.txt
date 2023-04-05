@@ -1,3 +1,4 @@
+diffusers==0.14.0
 einops==0.6.0  # convnext U-Net
 imageio==2.27.0  # diffusion notebook: 01_diffusion_intro.ipynb
 kornia==0.6.11  # diffusion notebook: 02_pixel_diffusion.ipynb
