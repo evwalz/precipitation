@@ -14,7 +14,7 @@ conda create -n precip_2.0 python=3.10
 ```
 Activate the environment:
 ```
-conda activate recip_2.0
+conda activate precip_2.0
 ```
 First, the long PyTorch install (Using Cuda 11.x requires driver version >450.80.02):
 ```
