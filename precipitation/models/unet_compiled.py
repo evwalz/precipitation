@@ -183,7 +183,7 @@ if __name__ == "__main__":
     
     trainer = L.Trainer(max_epochs=20, logger=log_tb, accelerator="gpu", devices=[1], benchmark=True, log_every_n_steps=50, num_sanity_val_steps=-1)
     
-    data_module = PrecipitationDataModule(feature_set="v7_nocorr+time", fold=0, data_dir="/home/gregor/datasets/precipitation")
+    data_module = PrecipitationDataModule(feature_set="v2+time", fold=0, data_dir="/home/gregor/datasets/precipitation")
     
     trainer.fit(model=comp_m, datamodule=data_module)
     

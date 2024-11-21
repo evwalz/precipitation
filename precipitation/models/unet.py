@@ -131,40 +131,90 @@ class PrecipitationUNet(L.LightningModule):
             self.training_step_preds.clear()
             self.training_step_targets.clear()
             
-            # crps_whole = np.zeros((self.hparams.grid_lat, self.hparams.grid_lon))
+            # save forecast data to apply EasyUQ
+            data_fct_path = self.trainer.datamodule.data_dir / '/forecasts/cnn_fct/'
             
-            num_processes = torch.multiprocessing.cpu_count()
-            ctx = torch.multiprocessing.get_context('spawn')
-            pool = ctx.Pool(processes=num_processes)
+
+            fold_val = self.trainer.datamodule.fold
+
+            dim_preds = self.trainer.datamodule.cv_fold[0][-1]
+            dim_vals = len(self.trainer.datamodule.cv_fold[1])
+
+            start_train = train_preds.shape[0] - dim_preds
+            start_val = val_preds.shape[0] - dim_vals
             
-            # num_processes = multiprocessing.cpu_count()
-            # ctx = multiprocessing.get_context('spawn')
+            xr_train_prds = xr.DataArray(
+                np.random.rand(),
+                coords=[np.arange(dim_preds),np.arange(19), np.arange(-25, 35.5)],
+                dims=["time", "lat", "lon"],
+                name='train_preds'
+             ) 
+            
+            xr_train_prds[:, :, :] = train_preds[start_train:, :, :]
+
+            xr_val_prds = xr.DataArray(
+                np.random.rand(),
+                coords=[np.arange(dim_vals),np.arange(19), np.arange(-25, 35.5)],
+                dims=["time", "lat", "lon"],
+                name='val_preds'
+             ) 
+            
+            xr_val_prds[:, :, :] = val_preds[start_val:, :, :]
+
+            xr_train_tar = xr.DataArray(
+                np.random.rand(),
+                coords=[np.arange(dim_preds),np.arange(19), np.arange(-25, 35.5)],
+                dims=["time", "lat", "lon"],
+                name='train_tar'
+             ) 
+            
+            xr_train_tar[:, :, :] = train_targets[start_train:, :, :]
+
+            xr_val_tar = xr.DataArray(
+                np.random.rand(),
+                coords=[np.arange(dim_vals),np.arange(19), np.arange(-25, 35.5)],
+                dims=["time", "lat", "lon"],
+                name='val_tar'
+             ) 
+            
+            xr_val_tar[:, :, :] = val_targets[start_val:, :, :]
+
+            val_preds_name = 'subset_val_preds_'+str(self.trainer.datamodule.feature_set)+'_fold'+str(self.trainer.datamodule.fold)+'.nc'
+            val_tar_name = 'subset_val_target_'+str(self.trainer.datamodule.feature_set)+'_fold'+str(self.trainer.datamodule.fold)+'.nc'
+            train_preds_name =  'subset_train_preds_'+str(self.trainer.datamodule.feature_set)+'_fold'+str(self.trainer.datamodule.fold)+'.nc'
+            train_tar_name = 'subset_train_target_'+str(self.trainer.datamodule.feature_set)+'_fold'+str(self.trainer.datamodule.fold)+'.nc'
+
+
+            xr_val_prds.to_netcdf(data_fct_path / val_preds_name)
+            xr_val_tar.to_netcdf(data_fct_path / val_tar_name)
+            xr_train_prds.to_netcdf(data_fct_path / train_preds_name)
+            xr_train_tar.to_netcdf(data_fct_path / train_tar_name)            
+            # num_processes = torch.multiprocessing.cpu_count()
+            # ctx = torch.multiprocessing.get_context('spawn')
             # pool = ctx.Pool(processes=num_processes)
             
-            # pool = multiprocessing.Pool(processes=num_processes)
+            # args_list = [(val_preds, val_targets, train_preds, train_targets, mask, i, j) for i in range(self.hparams.grid_lat) for j in range(self.hparams.grid_lon)]
             
-            args_list = [(val_preds, val_targets, train_preds, train_targets, mask, i, j) for i in range(self.hparams.grid_lat) for j in range(self.hparams.grid_lon)]
-            
-            pbar = tqdm(total=len(args_list))
-            def update_pbar(*a):
-                pbar.update()
+            # pbar = tqdm(total=len(args_list))
+            # def update_pbar(*a):
+            #     pbar.update()
                 
-            crps_list = []
-            for arg in args_list:
-                crps_per_grid = pool.apply_async(calculate_crps_idr, args=arg, callback=update_pbar)
-                crps_list.append(crps_per_grid)
+            # crps_list = []
+            # for arg in args_list:
+            #     crps_per_grid = pool.apply_async(calculate_crps_idr, args=arg, callback=update_pbar)
+            #     crps_list.append(crps_per_grid)
             
-            pool.close()
-            pool.join()
+            # pool.close()
+            # pool.join()
             
-            crps_list = [crps.get() for crps in crps_list]
-            # filter out None values (i.e. where mask is 0)
-            crps_list = [crps for crps in crps_list if crps is not None]
+            # crps_list = [crps.get() for crps in crps_list]
+            # # filter out None values (i.e. where mask is 0)
+            # crps_list = [crps for crps in crps_list if crps is not None]
             
-            mean_masked_crps = np.mean(crps_list)
-            print(f"Mean masked CRPS: {mean_masked_crps}")
+            # mean_masked_crps = np.mean(crps_list)
+            # print(f"Mean masked CRPS: {mean_masked_crps}")
 
-            self.log_dict({"val_metrics/masked_crps": mean_masked_crps})
+            # self.log_dict({"val_metrics/masked_crps": mean_masked_crps})
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams_initial.learning_rate, weight_decay=self.hparams.weight_decay)  # type: ignore

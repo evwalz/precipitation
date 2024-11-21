@@ -361,9 +361,6 @@ class PrecipitationDataModule(LightningDataModule):
         
     def subset_v1(self, paths) -> tuple[list[str], list[str]]:
         train = [
-            f"corr_predictors/predictor_train_{self.fold+10}_{self.fold+11}_1lag.nc",
-            f"corr_predictors/predictor_train_{self.fold+10}_{self.fold+11}_2lag.nc",
-            f"corr_predictors/predictor_train_{self.fold+10}_{self.fold+11}_3lag.nc",
             paths.path_pw_train,
             paths.path_cape_train,
             paths.path_cc_train,
@@ -372,29 +369,14 @@ class PrecipitationDataModule(LightningDataModule):
             paths.path_rh3_train,
             paths.path_d2m_train,
             paths.path_cin_train,
-            paths.path_vo7_train,
             paths.path_sh600_train,
             paths.path_sh925_train,
             paths.path_temp_train,
             paths.path_kindx_train,
             paths.path_sh7_train,
-            paths.path_sp_train,
             paths.path_shear_train,
-            #paths.path_geodiff_train,
-            #paths.path_vertvelo_train,
-            #paths.path_vimd_train,
-            #paths.path_stream_train,
-            #paths.pressure_tendency_train,
-            #paths.precip_lag1_train,
-            #paths.precip_lag2_train,
-            #paths.precip_lag3_train,
-            #f"upstream_predictors/geodiff/predictor_train_abs_{self.fold+10}_{self.fold+11}_0lag.nc",
-            #f"upstream_predictors/vvmean/predictor_train_abs_{self.fold+10}_{self.fold+11}_0lag.nc",
         ]
         test = [
-            "corr_predictors/predictor_test_18_19_1lag.nc",
-            "corr_predictors/predictor_test_18_19_2lag.nc",
-            "corr_predictors/predictor_test_18_19_3lag.nc",
             paths.path_pw_test,
             paths.path_cape_test,
             paths.path_cc_test,
@@ -403,31 +385,19 @@ class PrecipitationDataModule(LightningDataModule):
             paths.path_rh3_test,
             paths.path_d2m_test,
             paths.path_cin_test,
-            paths.path_vo7_test,
             paths.path_sh600_test,
             paths.path_sh925_test,
             paths.path_temp_test,
             paths.path_kindx_test,
             paths.path_sh7_test,
-            paths.path_sp_test,
             paths.path_shear_test,
-            #paths.path_geodiff_test,
-            #paths.path_vertvelo_test,
-            #paths.path_vimd_test,
-            #paths.path_stream_test,
-            #paths.pressure_tendency_test,
-            #paths.precip_lag1_test,
-            #paths.precip_lag2_test,
-            #paths.precip_lag3_test,
-            #"upstream_predictors/geodiff/predictor_test_abs_18_19_0lag.nc",
-            #"upstream_predictors/vvmean/predictor_test_abs_18_19_0lag.nc",
         ]
 
         return train, test
 
 
 if __name__ == "__main__":
-    data = PrecipitationDataModule(feature_set="v1+time", data_dir="/home/gregor/datasets/precipitation", batch_size=32, fold=0)
+    data = PrecipitationDataModule(feature_set="v1+time", data_dir="~/datasets/precipitation", batch_size=32, fold=0)
     data.setup(stage="fit")
 
     train_loader = data.train_dataloader()
