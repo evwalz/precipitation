@@ -8,6 +8,7 @@ wandb/
 logs/
 latest_logs/
 checkpoints/
+.DS_Store
 
 # C extensions
 *.so
