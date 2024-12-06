@@ -1,4 +1,4 @@
-# precipitation
+# Precipitation
 Forecasting precipitation, 1 day at a time.
 
 ## Next Steps
@@ -55,3 +55,8 @@ cd ~/precipitation/repos/
 git clone https://github.com/evwalz/precipitation.git
 pip install -e .
 ```
+
+## Data
+
+To train model, we need [GPM IMERG](https://gpm.nasa.gov/data/imerg) data and [ERA5](https://www.ecmwf.int/en/forecasts/dataset/ecmwf-reanalysis-v5) reanalysis data. [Here](https://github.com/evwalz/precipitation_forecasting), preprocessed GPM IMERG data and scripts to download and preprocess ERA5 data are provided. After running scripts in folder [download_data](https://github.com/evwalz/precipitation_forecasting/tree/main/scripts/download_data), get folder [precip_data](https://github.com/evwalz/precipitation_forecasting/tree/main/precip_data) and use directory of this folder as data path to run scripts in this repository.
+
